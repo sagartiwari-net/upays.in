@@ -19,7 +19,8 @@ import (
 )
 
 type AppServices struct {
-	EmailWorker *emailverify.MultiProfileWorker
+	EmailWorker  *emailverify.MultiProfileWorker
+	WebhookRetry *services.WebhookRetryWorker
 }
 
 func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppServices) {
@@ -39,7 +40,9 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	adminRepo := repository.NewAdminRepository(db)
 	subscriptionRepo := repository.NewSubscriptionRepository(db)
 	cmsRepo := repository.NewCMSPageRepository(db)
-	notifier := services.NewMerchantNotifier(merchantRepo, log)
+	webhookLogRepo := repository.NewWebhookLogRepository(db)
+	notifier := services.NewMerchantNotifier(merchantRepo, orderRepo, webhookLogRepo, log)
+	webhookRetryWorker := services.NewWebhookRetryWorker(webhookLogRepo, notifier, log)
 
 	profileService := services.NewProfileService(profileRepo, merchantRepo, cfg, log)
 	if err := profileService.BootstrapFromEnv(context.Background()); err != nil {
@@ -70,7 +73,6 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	checkoutHandler := handlers.NewCheckoutHandler(cfg.PaymentProvider, upiService, paymentService)
 
 	adminAuth := services.NewAdminAuthService(adminRepo, cfg.JWTSecret)
-	webhookLogRepo := repository.NewWebhookLogRepository(db)
 	adminHandler := handlers.NewAdminHandler(
 		adminAuth, profileService, profileRepo, merchantRepo, orderRepo,
 		bankTxnRepo, webhookLogRepo, notifier, emailWorker, subscriptionService, cmsRepo,
@@ -145,7 +147,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	)
 
 	merchantAPI := app.Group("/merchant/api")
-	merchantAPI.Post("/auth/register", merchantPortal.Register)
+	merchantAPI.Post("/auth/register", middleware.SignupRateLimit(), merchantPortal.Register)
 	merchantAPI.Post("/auth/login", merchantPortal.Login)
 	merchantAPI.Get("/parser-types", merchantPortal.ParserTypes)
 
@@ -178,7 +180,14 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	api.Post("/orders/create", orderHandler.Create)
 	api.Get("/orders/:order_id/verify", orderHandler.Verify)
 
-	return app, &AppServices{EmailWorker: emailWorker}
+	return app, &AppServices{EmailWorker: emailWorker, WebhookRetry: webhookRetryWorker}
+}
+
+func StartBackgroundWorkers(ctx context.Context, cfg *config.Config, svc *AppServices) {
+	StartEmailWorker(ctx, cfg, svc)
+	if svc != nil && svc.WebhookRetry != nil {
+		go svc.WebhookRetry.Start(ctx)
+	}
 }
 
 func StartEmailWorker(ctx context.Context, cfg *config.Config, svc *AppServices) {

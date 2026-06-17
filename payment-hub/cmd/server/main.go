@@ -37,7 +37,7 @@ func main() {
 	app, appServices := api.NewApp(cfg, log, db)
 	workerCtx, workerCancel := context.WithCancel(context.Background())
 	defer workerCancel()
-	api.StartEmailWorker(workerCtx, cfg, appServices)
+	api.StartBackgroundWorkers(workerCtx, cfg, appServices)
 
 	go func() {
 		addr := fmt.Sprintf(":%s", cfg.AppPort)

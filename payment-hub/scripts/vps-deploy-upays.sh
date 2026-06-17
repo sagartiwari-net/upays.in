@@ -57,4 +57,11 @@ curl -sf "http://127.0.0.1:${PORT}/health" && echo " Health OK" || echo " WARN: 
 curl -sf "http://127.0.0.1:${PORT}/public/plans" >/dev/null && echo " Public plans API OK" || echo " WARN: /public/plans failed — old binary still running?"
 curl -sf "http://127.0.0.1:${PORT}/docs" >/dev/null && echo " Docs OK" || echo " WARN: /docs failed"
 
+echo "==> Ops scripts"
+chmod +x scripts/*.sh 2>/dev/null || true
+mkdir -p logs backups
+if ! crontab -l 2>/dev/null | grep -qF '# upipays-cron'; then
+  echo "    Tip: run once — bash payment-hub/scripts/setup-cron.sh"
+fi
+
 echo "==> Done. Site: https://upays.in"

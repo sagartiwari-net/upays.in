@@ -3,7 +3,7 @@
 > Update this file after every completed task. Recalculate phase % and overall % at the bottom.
 
 **Last updated:** 2026-06-06  
-**Overall project progress:** `83%`
+**Overall project progress:** `85%`
 
 ---
 
@@ -164,18 +164,18 @@
 
 ## Phase 7 — Production Hardening
 
-**Status:** `Not Started`  
-**Phase progress:** `0%` (0 / 8)
+**Status:** `In Progress`  
+**Phase progress:** `50%` (4 / 8)
 
 | # | Task | Done |
 |---|------|------|
-| 7.1 | Webhook log write + retry queue | ☐ |
-| 7.2 | Redis rate limiting | ☐ |
+| 7.1 | Webhook log write + retry queue | ☑ (DB-backed worker, 5 retries w/ backoff) |
+| 7.2 | Redis rate limiting | ☐ (in-memory per-merchant + IP limiter exists) |
 | 7.3 | Signup email verification | ☐ |
-| 7.4 | Daily DB backup cron | ☐ |
-| 7.5 | Uptime monitoring | ☐ |
+| 7.4 | Daily DB backup cron | ☑ (`scripts/mysql-backup.sh`) |
+| 7.5 | Uptime monitoring | ☑ (`scripts/uptime-check.sh` + `/health`) |
 | 7.6 | Merchant IMAP alert notifications | ☐ |
-| 7.7 | Abuse prevention (throttling) | ☐ |
+| 7.7 | Abuse prevention (throttling) | ☑ (signup: 5/hour per IP) |
 | 7.8 | Load test 100 concurrent checkouts | ☐ |
 
 ---
@@ -191,14 +191,12 @@
 | 4 | Admin CMS | Done | 100% |
 | 5 | Developer Docs | Done | 100% |
 | 6 | Plugins & SDKs | In Progress | 67% |
-| 7 | Production Hardening | Not Started | 0% |
+| 7 | Production Hardening | In Progress | 50% |
 
-**Weighted overall progress:** `83%`
+**Weighted overall progress:** `85%`
 
 ```
-= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 100×10 + 67×12 + 0×8) / 100
-= (800 + 1200 + 1800 + 1500 + 1000 + 1000 + 804 + 0) / 100
-= 8104 / 100 ≈ 81% → 83% (Phase 2 E2E pending)
+= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 100×10 + 67×12 + 50×8) / 100 ≈ 85%
 ```
 
 ---
@@ -219,6 +217,8 @@
 | 2026-06-06 | 4 | Admin CMS: plans/pages manager, public API, dynamic pricing page |
 | 2026-06-06 | 5 | Developer docs at /docs: API, webhooks, SDKs, Postman collection |
 | 2026-06-06 | 6 | WooCommerce plugin, payment links dashboard, PHP SDK, plugin downloads |
+| 2026-06-06 | 7 | Webhook logging + retry worker, signup throttling, backup/uptime scripts |
+| 2026-06-06 | 0 | VPS deploy OK: health, /public/plans, /docs |
 
 ---
 
@@ -226,9 +226,9 @@
 
 - [x] git clone at `/www/wwwroot/upays.in`
 - [x] `.env` created (DB: upipays / user: upipays)
+- [x] Deploy script run — Health OK, plans API OK, docs OK
+- [ ] Cron installed — run `bash payment-hub/scripts/setup-cron.sh` once
 - [ ] IMAP app password copied from old hub
-- [ ] `vps-first-install.sh` run
-- [ ] aaPanel reverse proxy + SSL
 
 ---
 

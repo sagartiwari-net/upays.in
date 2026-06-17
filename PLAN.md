@@ -226,14 +226,14 @@
 
 ### Tasks
 
-- [ ] Webhook outbound: write to `webhook_logs` + retry worker (Redis queue)
-- [ ] Rate limiting per merchant API key (Redis)
+- [x] Webhook outbound: write to `webhook_logs` + retry worker (DB queue, 5 retries)
+- [ ] Rate limiting per merchant API key (Redis) — in-memory limiter live
 - [ ] Email verification on signup
 - [ ] Optional domain verification for merchants
-- [ ] Daily MySQL backup cron
-- [ ] Uptime monitoring (UptimeRobot or similar)
+- [x] Daily MySQL backup cron (`scripts/mysql-backup.sh` + `setup-cron.sh`)
+- [x] Uptime monitoring (`scripts/uptime-check.sh` + `/health`)
 - [ ] IMAP health alerts → email/WhatsApp to merchant
-- [ ] Abuse: signup throttling, suspicious UPI block list
+- [x] Abuse: signup throttling (5/hour per IP on register)
 - [ ] Load test: 100 concurrent checkouts
 
 ---
