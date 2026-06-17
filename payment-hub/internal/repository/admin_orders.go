@@ -138,6 +138,26 @@ func (r *OrderRepository) DashboardStats(ctx context.Context) (*DashboardStats, 
 	return s, err
 }
 
+func (r *OrderRepository) DashboardStatsForMerchant(ctx context.Context, merchantID string) (*DashboardStats, error) {
+	const q = `
+		SELECT
+			COALESCE(SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN DATE(created_at) = CURDATE() AND status = 'success' THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN DATE(created_at) = CURDATE() AND status = 'success' THEN amount ELSE 0 END), 0),
+			COUNT(*),
+			COALESCE(SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0)
+		FROM orders WHERE merchant_id = ?
+	`
+	s := &DashboardStats{}
+	err := r.db.QueryRowContext(ctx, q, merchantID).Scan(
+		&s.TodayOrders, &s.TodaySuccess, &s.TodayRevenue,
+		&s.TotalOrders, &s.TotalSuccess, &s.TotalRevenue, &s.PendingOrders,
+	)
+	return s, err
+}
+
 type MerchantRevenueRow struct {
 	MerchantID   string
 	MerchantName string

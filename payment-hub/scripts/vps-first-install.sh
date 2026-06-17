@@ -30,7 +30,9 @@ fi
 
 echo "==> 2/6 MySQL tables"
 mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
-  < "$HUB/migrations/install_upipays_full.sql"
+  < "$HUB/migrations/install_upipays_full.sql" 2>/dev/null || true
+mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
+  < "$HUB/migrations/000009_merchant_users.up.sql" 2>/dev/null || true
 echo "Tables OK"
 
 echo "==> 3/6 Admin user"
@@ -42,11 +44,14 @@ else
   go run ./cmd/seedadmin "$ADMIN_EMAIL" "$ADMIN_PASS"
 fi
 
-echo "==> 4/6 Node + admin build"
+echo "==> 4/6 Node + admin + merchant build"
 if ! command -v node &>/dev/null; then
-  echo "WARN: node not found — install Node 18+ or build admin locally and git pull"
+  echo "WARN: node not found — install Node 18+ or build locally and git pull"
 else
   cd "$ROOT/payment-hub-admin"
+  npm ci
+  npm run build
+  cd "$ROOT/payment-hub-merchant"
   npm ci
   npm run build
 fi
@@ -77,6 +82,6 @@ Next steps (aaPanel):
 2. SSL certificate for upays.in
 3. Open https://upays.in — homepage
 4. Admin: https://upays.in/admin/login
-5. Add UPI Profile in admin (UPI ID + Gmail app password) if not bootstrapped
+5. Merchants: https://upays.in/dashboard/register
 ========================================
 EOF

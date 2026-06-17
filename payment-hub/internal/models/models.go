@@ -120,3 +120,14 @@ type AdminUser struct {
 	Role         string
 	CreatedAt    time.Time
 }
+
+type MerchantUser struct {
+	ID             string
+	Email          string
+	PasswordHash   string
+	Name           string
+	MerchantID     string
+	OnboardingDone bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}

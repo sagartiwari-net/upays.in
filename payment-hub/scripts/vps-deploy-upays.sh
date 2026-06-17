@@ -16,8 +16,20 @@ cd payment-hub-admin
 npm ci
 npm run build
 
-echo "==> Building Go server"
+echo "==> Building merchant dashboard"
+cd ../payment-hub-merchant
+npm ci
+npm run build
+
+echo "==> Migration merchant_users (if needed)"
 cd ../payment-hub
+if [[ -f .env ]]; then
+  set -a; source .env; set +a
+  mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
+    < migrations/000009_merchant_users.up.sql 2>/dev/null || true
+fi
+
+echo "==> Building Go server"
 go build -o bin/upipays ./cmd/server
 
 echo "==> Running migrations (if migrate tool available)"

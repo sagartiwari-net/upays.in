@@ -118,7 +118,28 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	adminProtected.Put("/merchants/:id/payment-profile", adminHandler.AssignMerchantProfile)
 	adminProtected.Post("/onboarding/website", adminHandler.OnboardWebsite)
 
+	merchantUserRepo := repository.NewMerchantUserRepository(db)
+	merchantAuthSvc := services.NewMerchantAuthService(db, merchantUserRepo, merchantRepo, cfg.JWTSecret)
+	merchantPortal := handlers.NewMerchantPortalHandler(
+		merchantAuthSvc, merchantUserRepo, merchantRepo, orderRepo, profileService,
+	)
+
+	merchantAPI := app.Group("/merchant/api")
+	merchantAPI.Post("/auth/register", merchantPortal.Register)
+	merchantAPI.Post("/auth/login", merchantPortal.Login)
+	merchantAPI.Get("/parser-types", merchantPortal.ParserTypes)
+
+	merchantProtected := merchantAPI.Group("", middleware.MerchantPortalJWT(cfg.JWTSecret))
+	merchantProtected.Get("/auth/me", merchantPortal.Me)
+	merchantProtected.Get("/dashboard", merchantPortal.Dashboard)
+	merchantProtected.Get("/orders", merchantPortal.ListOrders)
+	merchantProtected.Put("/merchant", merchantPortal.UpdateMerchant)
+	merchantProtected.Post("/merchant/regenerate-secret", merchantPortal.RegenerateSecret)
+	merchantProtected.Post("/payment-profile", merchantPortal.SetupPaymentProfile)
+	merchantProtected.Post("/onboarding/complete", merchantPortal.CompleteOnboarding)
+
 	registerAdminUI(app)
+	registerMerchantUI(app)
 	registerPublicSite(app)
 
 	maxSkew := time.Duration(cfg.SignatureMaxAgeMinutes) * time.Minute

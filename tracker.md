@@ -3,7 +3,7 @@
 > Update this file after every completed task. Recalculate phase % and overall % at the bottom.
 
 **Last updated:** 2026-06-06  
-**Overall project progress:** `18%`
+**Overall project progress:** `42%`
 
 ---
 
@@ -76,20 +76,20 @@
 
 ## Phase 2 — Merchant Auth & Onboarding
 
-**Status:** `Not Started`  
-**Phase progress:** `0%` (0 / 10)
+**Status:** `In Progress`  
+**Phase progress:** `90%` (9 / 10)
 
 | # | Task | Done |
 |---|------|------|
-| 2.1 | `merchant_users` DB migration | ☐ |
-| 2.2 | Register / login / forgot-password API | ☐ |
-| 2.3 | Merchant JWT middleware | ☐ |
-| 2.4 | `upipays-merchant/` app scaffold | ☐ |
-| 2.5 | 4-step onboarding wizard | ☐ |
-| 2.6 | Auto merchant + API key on signup | ☐ |
-| 2.7 | Merchant dashboard — overview stats | ☐ |
-| 2.8 | Merchant dashboard — orders, keys, webhook | ☐ |
-| 2.9 | Row-level data isolation | ☐ |
+| 2.1 | `merchant_users` DB migration | ☑ |
+| 2.2 | Register / login API | ☑ |
+| 2.3 | Merchant JWT middleware | ☑ |
+| 2.4 | `payment-hub-merchant/` app | ☑ |
+| 2.5 | Onboarding wizard (UPI setup) | ☑ |
+| 2.6 | Auto merchant + API key on signup | ☑ |
+| 2.7 | Merchant dashboard — overview stats | ☑ |
+| 2.8 | Merchant dashboard — orders, keys, webhook | ☑ |
+| 2.9 | Row-level data isolation | ☑ |
 | 2.10 | End-to-end signup → live payment test | ☐ |
 
 ---
@@ -184,16 +184,18 @@
 
 | Phase | Name | Status | Progress |
 |-------|------|--------|----------|
-| 0 | Foundation & Deploy | In Progress | 40% |
-| 1 | Marketing Site | In Progress | 70% |
-| 2 | Merchant Auth | Not Started | 0% |
+| 0 | Foundation & Deploy | In Progress | 80% |
+| 1 | Marketing Site | In Progress | 80% |
+| 2 | Merchant Auth | In Progress | 90% |
 | 3 | Subscriptions | Not Started | 0% |
 | 4 | Admin CMS | Not Started | 0% |
 | 5 | Developer Docs | Not Started | 0% |
 | 6 | Plugins & SDKs | In Progress | 17% |
 | 7 | Production Hardening | Not Started | 0% |
 
-**Weighted overall progress:** `18%`
+**Weighted overall progress:** `42%`
+
+| 2026-06-06 | 2 | Merchant portal: register, login, onboarding, dashboard at /dashboard |
 
 ```
 = (40×10 + 70×15 + 0×20 + 0×15 + 0×10 + 0×10 + 17×12 + 0×8) / 100

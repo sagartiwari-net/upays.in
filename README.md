@@ -38,7 +38,7 @@ upays.in/
 │   ├── web/admin/             ← Built super-admin React app
 │   ├── scripts/vps-deploy-upays.sh
 │   └── deploy/upays.in.conf   ← Reverse proxy config
-└── payment-hub-admin/         ← React admin source (build → payment-hub/web/admin)
+└── payment-hub-merchant/        ← Merchant dashboard source (build → payment-hub/web/merchant)
 ```
 
 ---

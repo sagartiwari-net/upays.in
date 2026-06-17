@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/models"
@@ -17,11 +18,15 @@ type MerchantInput struct {
 }
 
 func (r *MerchantRepository) Create(ctx context.Context, m *models.Merchant) error {
+	return r.CreateTx(ctx, r.db, m)
+}
+
+func (r *MerchantRepository) CreateTx(ctx context.Context, exec sqlExecutor, m *models.Merchant) error {
 	const q = `
 		INSERT INTO merchants (id, name, domain, api_key, api_secret, webhook_url, return_url, status, payment_profile_id)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
-	_, err := r.db.ExecContext(ctx, q,
+	_, err := exec.ExecContext(ctx, q,
 		m.ID, m.Name, m.Domain, m.APIKey, m.APISecret,
 		m.WebhookURL, nullString(m.ReturnURL), m.Status, nullStringPtr(m.PaymentProfileID),
 	)
@@ -32,6 +37,10 @@ func (r *MerchantRepository) Create(ctx context.Context, m *models.Merchant) err
 		return fmt.Errorf("create merchant: %w", err)
 	}
 	return nil
+}
+
+type sqlExecutor interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
 func (r *MerchantRepository) Update(ctx context.Context, id string, in MerchantInput) error {

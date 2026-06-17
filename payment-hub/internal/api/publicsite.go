@@ -30,6 +30,6 @@ func registerPublicSite(app *fiber.App) {
 	}
 
 	app.Get("/register", func(c *fiber.Ctx) error {
-		return c.Redirect("/admin/login", fiber.StatusTemporaryRedirect)
+		return c.Redirect("/dashboard/register", fiber.StatusTemporaryRedirect)
 	})
 }
