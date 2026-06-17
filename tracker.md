@@ -227,7 +227,7 @@
 - [x] git clone at `/www/wwwroot/upays.in`
 - [x] `.env` created (DB: upipays / user: upipays)
 - [x] Deploy script run — Health OK, plans API OK, docs OK
-- [ ] Cron installed — run `bash payment-hub/scripts/setup-cron.sh` once
+- [x] Cron installed (`setup-cron.sh` — re-run to dedupe if needed)
 - [ ] IMAP app password copied from old hub
 
 ---
