@@ -1,0 +1,24 @@
+.upipays-pay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #6d28d9, #7c3aed);
+  color: #fff !important;
+  border-radius: 8px;
+  text-decoration: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.upipays-pay-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(109, 40, 217, 0.45);
+}
+
+.upipays-pay-btn::before {
+  content: "⚡";
+}

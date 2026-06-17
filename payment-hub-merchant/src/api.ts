@@ -121,6 +121,23 @@ export const api = {
   regenerateSecret: () => request<{ api_key: string; api_secret: string }>('/merchant/regenerate-secret', { method: 'POST' }),
   setupProfile: (body: object) => request<{ payment_profile: object; onboarding_done: boolean }>('/payment-profile', { method: 'POST', body: JSON.stringify(body) }),
   parserTypes: () => request<{ parser_types: { id: string; label: string; sender_filter: string }[] }>('/parser-types'),
+  createPaymentLink: (body: { amount: number; product_name: string; return_url?: string }) =>
+    request<{ order_id: string; payment_url: string; expires_at: string }>('/payment-links', { method: 'POST', body: JSON.stringify(body) }),
+  downloadWooCommerce: () => download('/downloads/woocommerce-plugin', 'upipays-woocommerce.zip'),
+  downloadAmember: () => download('/downloads/amember-plugin', 'upipays-amember-plugin.zip'),
+}
+
+async function download(path: string, filename: string) {
+  const token = getToken()
+  const res = await fetch('/merchant/api' + path, { headers: token ? { Authorization: 'Bearer ' + token } : {} })
+  if (!res.ok) throw new Error('Download failed')
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export function copyText(text: string) {

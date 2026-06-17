@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WooCommerce — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>Plugins</h4>
+        <a href="/docs/plugins/woocommerce" class="active">WooCommerce</a>
+        <a href="/docs/plugins/amember">aMember Pro</a>
+        <a href="/docs/plugins/payment-links">Payment Links</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>WooCommerce Plugin</h1>
+    <p class="docs-lead">Accept UPI on WordPress / WooCommerce stores.</p>
+    <h2>Download</h2>
+    <p>Merchant dashboard → <strong>Integrations → Download WooCommerce plugin</strong></p>
+    <h2>Install</h2>
+    <ol>
+      <li>WordPress Admin → Plugins → Add New → Upload Plugin</li>
+      <li>Upload <code>upipays-woocommerce.zip</code> and activate</li>
+      <li>WooCommerce → Settings → Payments → <strong>UPIPays UPI</strong></li>
+      <li>Hub URL: <code>https://upays.in</code></li>
+      <li>API Key + Secret from dashboard → Settings</li>
+    </ol>
+    <h2>Webhook</h2>
+    <pre>https://yoursite.com/?wc-api=wc_gateway_upipays</pre>
+    <p>Sent automatically with each order — marks WooCommerce order paid on <code>payment.success</code>.</p>
+    <h2>Test</h2>
+    <p>Create a ₹1 product, checkout with UPI, pay on QR page. Saving gateway settings runs a ₹1 API connectivity test.</p>
+  </main>
+</div>
+</body>
+</html>

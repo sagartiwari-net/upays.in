@@ -133,6 +133,7 @@ export const api = {
   unmatched: (offset = '0') =>
     request<{ unmatched: UnmatchedTxn[]; total: number }>('/unmatched?offset=' + offset),
   downloadPlugin: () => download('/downloads/amember-plugin', 'upipays-amember-plugin.zip'),
+  downloadWooCommerce: () => download('/downloads/woocommerce-plugin', 'upipays-woocommerce.zip'),
   subscriptionPlans: () => request<{ plans: SubscriptionPlan[] }>('/subscription-plans'),
   createPlan: (body: object) => request<SubscriptionPlan>('/subscription-plans', { method: 'POST', body: JSON.stringify(body) }),
   updatePlan: (id: string, body: object) => request<SubscriptionPlan>('/subscription-plans/' + id, { method: 'PUT', body: JSON.stringify(body) }),

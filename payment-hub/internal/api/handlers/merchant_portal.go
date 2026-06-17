@@ -1,10 +1,16 @@
 package handlers
 
 import (
+	"archive/zip"
+	"bytes"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/sagartiwari-net/upays.in/payment-hub/internal/assets/amember"
+	"github.com/sagartiwari-net/upays.in/payment-hub/internal/assets/plugins"
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/emailverify/parser"
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/models"
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/repository"
@@ -16,6 +22,7 @@ type MerchantPortalHandler struct {
 	users     *repository.MerchantUserRepository
 	merchants *repository.MerchantRepository
 	orders    *repository.OrderRepository
+	orderSvc  *services.OrderService
 	profiles  *services.ProfileService
 	subs      *services.SubscriptionService
 }
@@ -25,11 +32,13 @@ func NewMerchantPortalHandler(
 	users *repository.MerchantUserRepository,
 	merchants *repository.MerchantRepository,
 	orders *repository.OrderRepository,
+	orderSvc *services.OrderService,
 	profiles *services.ProfileService,
 	subs *services.SubscriptionService,
 ) *MerchantPortalHandler {
 	return &MerchantPortalHandler{
-		auth: auth, users: users, merchants: merchants, orders: orders, profiles: profiles, subs: subs,
+		auth: auth, users: users, merchants: merchants, orders: orders,
+		orderSvc: orderSvc, profiles: profiles, subs: subs,
 	}
 }
 
@@ -281,7 +290,36 @@ func (h *MerchantPortalHandler) ParserTypes(c *fiber.Ctx) error {
 			"id": p.ID, "label": p.Label, "sender_filter": p.SenderFilter, "bank_code": p.BankCode,
 		})
 	}
-	return c.JSON(fiber.Map{"parser_types": types})
+	return c.JSON(fiber.Map{"parser_types": types	})
+}
+
+func (h *MerchantPortalHandler) DownloadAmemberPlugin(c *fiber.Ctx) error {
+	content := amember.Plugin
+	if len(content) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "plugin not found"})
+	}
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	fw, _ := zw.Create("upipays.php")
+	_, _ = fw.Write(content)
+	_ = zw.Close()
+	c.Set("Content-Type", "application/zip")
+	c.Set("Content-Disposition", `attachment; filename="upipays-amember-plugin.zip"`)
+	return c.Send(buf.Bytes())
+}
+
+func (h *MerchantPortalHandler) DownloadWooCommercePlugin(c *fiber.Ctx) error {
+	dir := plugins.FindWooCommercePluginDir()
+	if dir == "" {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "plugin not found"})
+	}
+	buf, err := plugins.ZipDirectory(dir)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "zip failed"})
+	}
+	c.Set("Content-Type", "application/zip")
+	c.Set("Content-Disposition", `attachment; filename="upipays-woocommerce.zip"`)
+	return c.Send(buf)
 }
 
 func merchantUserResponse(u *models.MerchantUser) fiber.Map {
@@ -316,4 +354,62 @@ func merchantPortalResponse(m *models.Merchant, includeSecret bool) fiber.Map {
 		resp["api_secret"] = m.APISecret
 	}
 	return resp
+}
+
+func (h *MerchantPortalHandler) CreatePaymentLink(c *fiber.Ctx) error {
+	merchantID := c.Locals("merchant_id").(string)
+	var body struct {
+		Amount      float64 `json:"amount"`
+		ProductName string  `json:"product_name"`
+		ReturnURL   string  `json:"return_url"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Amount <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "amount must be greater than zero"})
+	}
+	if strings.TrimSpace(body.ProductName) == "" {
+		body.ProductName = "Payment"
+	}
+
+	m, err := h.merchants.GetByID(c.Context(), merchantID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "merchant not found"})
+	}
+
+	returnURL := strings.TrimSpace(body.ReturnURL)
+	if returnURL == "" {
+		returnURL = m.ReturnURL
+	}
+	if returnURL == "" {
+		returnURL = "https://upays.in"
+	}
+
+	orderID := fmt.Sprintf("LINK-%s", time.Now().UTC().Format("20060102150405"))
+	result, err := h.orderSvc.Create(c.Context(), m, models.CreateOrderInput{
+		OrderID:  orderID,
+		Amount:   body.Amount,
+		Currency: "INR",
+		Customer: models.CustomerInput{Name: "Customer", Email: "customer@example.com"},
+		Product:  models.ProductInput{Name: body.ProductName},
+		ReturnURL: returnURL,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrPlanLimitExceeded), errors.Is(err, services.ErrPlanExpired), errors.Is(err, services.ErrNoSubscription):
+			return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{"error": err.Error()})
+		case errors.Is(err, services.ErrInvalidInput):
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create payment link"})
+		}
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"order_id":    orderID,
+		"hub_order_id": result.HubOrderID,
+		"payment_url": result.PaymentURL,
+		"expires_at":  result.ExpiresAt.Format(time.RFC3339),
+	})
 }

@@ -103,6 +103,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	adminProtected.Get("/dashboard/merchant-revenue", adminHandler.MerchantRevenue)
 	adminProtected.Get("/dashboard/imap-alerts", adminHandler.IMAPAlerts)
 	adminProtected.Get("/downloads/amember-plugin", adminHandler.DownloadAmemberPlugin)
+	adminProtected.Get("/downloads/woocommerce-plugin", adminHandler.DownloadWooCommercePlugin)
 	adminProtected.Post("/payment-profiles/:id/test-imap", adminHandler.TestProfileIMAP)
 	adminProtected.Post("/payment-profiles/:id/test-parse", adminHandler.TestProfileParse)
 	adminProtected.Post("/payment-profiles/:id/trigger-poll", adminHandler.TriggerProfilePoll)
@@ -140,7 +141,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	merchantUserRepo := repository.NewMerchantUserRepository(db)
 	merchantAuthSvc := services.NewMerchantAuthService(db, merchantUserRepo, merchantRepo, subscriptionRepo, cfg.JWTSecret)
 	merchantPortal := handlers.NewMerchantPortalHandler(
-		merchantAuthSvc, merchantUserRepo, merchantRepo, orderRepo, profileService, subscriptionService,
+		merchantAuthSvc, merchantUserRepo, merchantRepo, orderRepo, orderService, profileService, subscriptionService,
 	)
 
 	merchantAPI := app.Group("/merchant/api")
@@ -158,6 +159,9 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	merchantProtected.Post("/onboarding/complete", merchantPortal.CompleteOnboarding)
 	merchantProtected.Get("/subscription", merchantPortal.Subscription)
 	merchantProtected.Get("/plans", merchantPortal.ListPlans)
+	merchantProtected.Post("/payment-links", merchantPortal.CreatePaymentLink)
+	merchantProtected.Get("/downloads/woocommerce-plugin", merchantPortal.DownloadWooCommercePlugin)
+	merchantProtected.Get("/downloads/amember-plugin", merchantPortal.DownloadAmemberPlugin)
 
 	registerAdminUI(app)
 	registerMerchantUI(app)

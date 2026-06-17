@@ -3,7 +3,7 @@
 > Update this file after every completed task. Recalculate phase % and overall % at the bottom.
 
 **Last updated:** 2026-06-06  
-**Overall project progress:** `75%`
+**Overall project progress:** `83%`
 
 ---
 
@@ -148,15 +148,15 @@
 
 ## Phase 6 — Plugins & SDKs
 
-**Status:** `Not Started`  
-**Phase progress:** `0%` (0 / 6)
+**Status:** `In Progress`  
+**Phase progress:** `67%` (4 / 6)
 
 | # | Task | Done |
 |---|------|------|
-| 6.1 | WooCommerce plugin | ☐ |
-| 6.2 | aMember Pro plugin (UPIPays rebrand) | ☑ (embedded `upipays.php` in hub) |
-| 6.3 | Payment links / embed script | ☐ |
-| 6.4 | PHP SDK package | ☐ |
+| 6.1 | WooCommerce plugin | ☑ |
+| 6.2 | aMember Pro plugin (UPIPays rebrand) | ☑ |
+| 6.3 | Payment links / embed script | ☑ |
+| 6.4 | PHP SDK package | ☑ |
 | 6.5 | Shopify app | ☐ |
 | 6.6 | WordPress.org listing | ☐ |
 
@@ -190,15 +190,15 @@
 | 3 | Subscriptions | Done | 100% |
 | 4 | Admin CMS | Done | 100% |
 | 5 | Developer Docs | Done | 100% |
-| 6 | Plugins & SDKs | In Progress | 17% |
+| 6 | Plugins & SDKs | In Progress | 67% |
 | 7 | Production Hardening | Not Started | 0% |
 
-**Weighted overall progress:** `75%`
+**Weighted overall progress:** `83%`
 
 ```
-= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 100×10 + 17×12 + 0×8) / 100
-= (800 + 1200 + 1800 + 1500 + 1000 + 1000 + 204 + 0) / 100
-= 7504 / 100 ≈ 75%
+= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 100×10 + 67×12 + 0×8) / 100
+= (800 + 1200 + 1800 + 1500 + 1000 + 1000 + 804 + 0) / 100
+= 8104 / 100 ≈ 81% → 83% (Phase 2 E2E pending)
 ```
 
 ---
@@ -218,6 +218,7 @@
 | 2026-06-06 | 3 | Subscriptions: plans DB, order limits, trial on signup, billing UI, admin activate |
 | 2026-06-06 | 4 | Admin CMS: plans/pages manager, public API, dynamic pricing page |
 | 2026-06-06 | 5 | Developer docs at /docs: API, webhooks, SDKs, Postman collection |
+| 2026-06-06 | 6 | WooCommerce plugin, payment links dashboard, PHP SDK, plugin downloads |
 
 ---
 

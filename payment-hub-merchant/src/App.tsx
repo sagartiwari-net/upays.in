@@ -202,6 +202,8 @@ function Shell() {
           <NavLink to="/" end><i className="fas fa-chart-line" /> Dashboard</NavLink>
           <NavLink to="/orders"><i className="fas fa-receipt" /> Transactions</NavLink>
           <NavLink to="/billing"><i className="fas fa-credit-card" /> Billing</NavLink>
+          <NavLink to="/links"><i className="fas fa-link" /> Payment Links</NavLink>
+          <NavLink to="/integrations"><i className="fas fa-plug" /> Integrations</NavLink>
           <NavLink to="/settings"><i className="fas fa-cog" /> Settings</NavLink>
         </nav>
         <div className="logout">
@@ -343,6 +345,85 @@ function BillingPage() {
   )
 }
 
+function PaymentLinksPage() {
+  const [form, setForm] = useState({ amount: '', product_name: '', return_url: '' })
+  const [link, setLink] = useState<{ payment_url: string; order_id: string; expires_at: string } | null>(null)
+  const [error, setError] = useState('')
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    try {
+      const res = await api.createPaymentLink({
+        amount: parseFloat(form.amount),
+        product_name: form.product_name || 'Payment',
+        return_url: form.return_url || undefined,
+      })
+      setLink(res)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed')
+    }
+  }
+
+  return (
+    <>
+      <header className="page-header"><div><h1>Payment Links</h1><p>Create shareable UPI payment URLs</p></div></header>
+      <form className="form form-wide card" onSubmit={submit}>
+        <label>Amount (INR)</label>
+        <input type="number" step="0.01" min="1" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required />
+        <label>Product / description</label>
+        <input value={form.product_name} onChange={e => setForm({ ...form, product_name: e.target.value })} placeholder="Consultation fee" />
+        <label>Return URL (optional)</label>
+        <input value={form.return_url} onChange={e => setForm({ ...form, return_url: e.target.value })} placeholder="https://yoursite.com/thank-you" />
+        {error && <div className="error">{error}</div>}
+        <button className="btn" type="submit">Create payment link</button>
+      </form>
+      {link && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <h3 className="card-title">Share this link</h3>
+          <p className="muted">Order: <code>{link.order_id}</code> · Expires {new Date(link.expires_at).toLocaleString()}</p>
+          <p><code style={{ wordBreak: 'break-all' }}>{link.payment_url}</code></p>
+          <button className="btn secondary" onClick={() => copyText(link.payment_url)}>Copy link</button>
+          {' '}
+          <a href={link.payment_url} target="_blank" rel="noreferrer" className="btn">Open</a>
+          <p className="muted" style={{ marginTop: 12 }}>Embed: <code>&lt;a href="{link.payment_url}" class="upipays-pay-btn"&gt;Pay via UPI&lt;/a&gt;</code></p>
+        </div>
+      )}
+    </>
+  )
+}
+
+function IntegrationsPage() {
+  return (
+    <>
+      <header className="page-header"><div><h1>Integrations</h1><p>Plugins & downloads</p></div></header>
+      <div className="stats-grid">
+        <div className="card stat-card">
+          <h3 className="card-title">WooCommerce</h3>
+          <p className="muted">WordPress / WooCommerce payment gateway</p>
+          <button className="btn" style={{ marginTop: 12 }} onClick={() => api.downloadWooCommerce().catch(e => alert(e.message))}>
+            Download plugin
+          </button>
+          <p style={{ marginTop: 8 }}><a href="/docs/plugins/woocommerce" target="_blank" rel="noreferrer">Install guide →</a></p>
+        </div>
+        <div className="card stat-card">
+          <h3 className="card-title">aMember Pro</h3>
+          <p className="muted">Membership sites</p>
+          <button className="btn" style={{ marginTop: 12 }} onClick={() => api.downloadAmember().catch(e => alert(e.message))}>
+            Download plugin
+          </button>
+          <p style={{ marginTop: 8 }}><a href="/docs/plugins/amember" target="_blank" rel="noreferrer">Install guide →</a></p>
+        </div>
+      </div>
+      <div className="card" style={{ marginTop: 20 }}>
+        <h3 className="card-title">Developer docs</h3>
+        <p>API reference, webhooks, SDK examples</p>
+        <a href="/docs" className="btn secondary" style={{ marginTop: 8, display: 'inline-flex', textDecoration: 'none' }}>View docs</a>
+      </div>
+    </>
+  )
+}
+
 function SettingsPage() {
   const [merchant, setMerchant] = useState<Merchant | null>(null)
   const [secret, setSecret] = useState<{ key: string; secret: string } | null>(null)
@@ -410,6 +491,8 @@ export default function App() {
         <Route index element={<DashboardHome />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="billing" element={<BillingPage />} />
+        <Route path="links" element={<PaymentLinksPage />} />
+        <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>

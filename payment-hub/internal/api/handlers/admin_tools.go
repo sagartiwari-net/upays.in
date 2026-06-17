@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/assets/amember"
+	"github.com/sagartiwari-net/upays.in/payment-hub/internal/assets/plugins"
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/emailverify"
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/emailverify/parser"
 	"github.com/sagartiwari-net/upays.in/payment-hub/internal/models"
@@ -236,6 +237,20 @@ func (h *AdminHandler) DownloadAmemberPlugin(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/zip")
 	c.Set("Content-Disposition", `attachment; filename="upipays-amember-plugin.zip"`)
 	return c.Send(buf.Bytes())
+}
+
+func (h *AdminHandler) DownloadWooCommercePlugin(c *fiber.Ctx) error {
+	dir := plugins.FindWooCommercePluginDir()
+	if dir == "" {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "woocommerce plugin not found"})
+	}
+	buf, err := plugins.ZipDirectory(dir)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "zip failed"})
+	}
+	c.Set("Content-Type", "application/zip")
+	c.Set("Content-Disposition", `attachment; filename="upipays-woocommerce.zip"`)
+	return c.Send(buf)
 }
 
 func (h *AdminHandler) MerchantRevenue(c *fiber.Ctx) error {

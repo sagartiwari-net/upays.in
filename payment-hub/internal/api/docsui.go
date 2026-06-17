@@ -27,6 +27,8 @@ func registerDocsSite(app *fiber.App) {
 		"/docs/sdks/node":      "/sdks/node.html",
 		"/docs/sdks/python":    "/sdks/python.html",
 		"/docs/plugins/amember": "/plugins/amember.html",
+		"/docs/plugins/woocommerce": "/plugins/woocommerce.html",
+		"/docs/plugins/payment-links": "/plugins/payment-links.html",
 	}
 	for route, file := range pages {
 		route, file := route, file
