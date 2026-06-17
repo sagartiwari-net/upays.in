@@ -21,18 +21,26 @@ cd ../payment-hub-merchant
 npm ci
 npm run build
 
-echo "==> Migration merchant_users (if needed)"
 cd ../payment-hub
+
+echo "==> Running SQL migrations"
 if [[ -f .env ]]; then
   set -a; source .env; set +a
-  mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
-    < migrations/000009_merchant_users.up.sql 2>/dev/null || true
+  MYSQL=(mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME")
+  for f in migrations/000009_merchant_users.up.sql \
+           migrations/000010_subscriptions.up.sql \
+           migrations/000011_cms_pages.up.sql; do
+    if [[ -f "$f" ]]; then
+      echo "    $f"
+      "${MYSQL[@]}" < "$f" 2>/dev/null || true
+    fi
+  done
 fi
 
 echo "==> Building Go server"
 go build -o bin/upipays ./cmd/server
 
-echo "==> Running migrations (if migrate tool available)"
+echo "==> Running golang-migrate (optional)"
 if command -v migrate &>/dev/null && [[ -f .env ]]; then
   source .env 2>/dev/null || true
   migrate -path migrations -database "mysql://${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST:-127.0.0.1}:${DB_PORT:-3306})/${DB_NAME}" up || echo "Migration skipped or failed — check manually"
@@ -40,9 +48,11 @@ fi
 
 echo "==> Restarting server on port $PORT"
 pkill -f "bin/upipays" 2>/dev/null || true
+pkill -f "bin/payment-hub" 2>/dev/null || true
 mkdir -p logs
 nohup ./bin/upipays > logs/app.log 2>&1 &
 sleep 1
 curl -sf "http://127.0.0.1:${PORT}/health" && echo " Health OK" || echo " WARN: health check failed — check logs/app.log"
+curl -sf "http://127.0.0.1:${PORT}/public/plans" >/dev/null && echo " Public plans API OK" || echo " WARN: /public/plans failed — old binary still running?"
 
 echo "==> Done. Site: https://upays.in"
