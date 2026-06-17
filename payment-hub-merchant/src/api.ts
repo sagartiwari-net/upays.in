@@ -67,6 +67,32 @@ export type DashboardStats = {
   success_rate: number
 }
 
+export type SubscriptionUsage = {
+  plan_id: string
+  plan_name: string
+  plan_slug: string
+  plan_price_inr: number
+  status: string
+  orders_used: number
+  order_limit: number
+  starts_at: string
+  expires_at: string
+  days_left: number
+  usage_percent: number
+  is_trial: boolean
+}
+
+export type SubscriptionPlan = {
+  id: string
+  slug: string
+  name: string
+  price_inr: number
+  validity_days: number
+  order_limit: number
+  is_recommended: boolean
+  features_json: string
+}
+
 export type Order = {
   id: string
   hub_order_id: string
@@ -85,6 +111,8 @@ export const api = {
   login: (email: string, password: string) => request<{ token: string; user: MerchantUser; merchant: Merchant }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   me: () => request<{ user: MerchantUser; merchant: Merchant; payment_profile?: object }>('/auth/me'),
   dashboard: () => request<DashboardStats>('/dashboard'),
+  subscription: () => request<{ subscription: SubscriptionUsage | null }>('/subscription'),
+  plans: () => request<{ plans: SubscriptionPlan[] }>('/plans'),
   orders: (params?: Record<string, string>) => {
     const q = new URLSearchParams(params).toString()
     return request<{ orders: Order[]; total: number }>('/orders' + (q ? '?' + q : ''))

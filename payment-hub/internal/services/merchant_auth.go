@@ -23,6 +23,7 @@ type MerchantAuthService struct {
 	db        *sql.DB
 	users     *repository.MerchantUserRepository
 	merchants *repository.MerchantRepository
+	subs      *repository.SubscriptionRepository
 	jwtSecret string
 }
 
@@ -30,9 +31,10 @@ func NewMerchantAuthService(
 	db *sql.DB,
 	users *repository.MerchantUserRepository,
 	merchants *repository.MerchantRepository,
+	subs *repository.SubscriptionRepository,
 	jwtSecret string,
 ) *MerchantAuthService {
-	return &MerchantAuthService{db: db, users: users, merchants: merchants, jwtSecret: jwtSecret}
+	return &MerchantAuthService{db: db, users: users, merchants: merchants, subs: subs, jwtSecret: jwtSecret}
 }
 
 type RegisterInput struct {
@@ -105,6 +107,11 @@ func (s *MerchantAuthService) Register(ctx context.Context, in RegisterInput) (s
 			return "", nil, nil, ErrEmailTaken
 		}
 		return "", nil, nil, err
+	}
+	if s.subs != nil {
+		if err := s.subs.AssignTrialTx(ctx, tx, merchantID); err != nil {
+			return "", nil, nil, err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return "", nil, nil, err

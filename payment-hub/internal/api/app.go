@@ -37,6 +37,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	bankTxnRepo := repository.NewBankTxnRepository(db)
 	profileRepo := repository.NewPaymentProfileRepository(db, cfg.EncryptSecret())
 	adminRepo := repository.NewAdminRepository(db)
+	subscriptionRepo := repository.NewSubscriptionRepository(db)
 	notifier := services.NewMerchantNotifier(merchantRepo, log)
 
 	profileService := services.NewProfileService(profileRepo, merchantRepo, cfg, log)
@@ -44,7 +45,8 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 		log.Warn("profile bootstrap failed", zap.Error(err))
 	}
 
-	orderService := services.NewOrderService(orderRepo, profileService, cfg.AppURL, cfg.OrderExpiryMinutes, cfg.PaymentProvider)
+	subscriptionService := services.NewSubscriptionService(subscriptionRepo)
+	orderService := services.NewOrderService(orderRepo, profileService, subscriptionService, cfg.AppURL, cfg.OrderExpiryMinutes, cfg.PaymentProvider)
 
 	var paymentService *services.PaymentService
 	var upiService *services.UPIService
@@ -70,7 +72,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	webhookLogRepo := repository.NewWebhookLogRepository(db)
 	adminHandler := handlers.NewAdminHandler(
 		adminAuth, profileService, profileRepo, merchantRepo, orderRepo,
-		bankTxnRepo, webhookLogRepo, notifier, emailWorker,
+		bankTxnRepo, webhookLogRepo, notifier, emailWorker, subscriptionService,
 	)
 
 	app.Get("/health", healthHandler.Health)
@@ -116,12 +118,15 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	adminProtected.Put("/merchants/:id", adminHandler.UpdateMerchant)
 	adminProtected.Post("/merchants/:id/regenerate-secret", adminHandler.RegenerateMerchantSecret)
 	adminProtected.Put("/merchants/:id/payment-profile", adminHandler.AssignMerchantProfile)
+	adminProtected.Get("/merchants/:id/subscription", adminHandler.GetMerchantSubscription)
+	adminProtected.Post("/merchants/:id/subscription", adminHandler.ActivateMerchantSubscription)
+	adminProtected.Get("/subscription-plans", adminHandler.ListSubscriptionPlans)
 	adminProtected.Post("/onboarding/website", adminHandler.OnboardWebsite)
 
 	merchantUserRepo := repository.NewMerchantUserRepository(db)
-	merchantAuthSvc := services.NewMerchantAuthService(db, merchantUserRepo, merchantRepo, cfg.JWTSecret)
+	merchantAuthSvc := services.NewMerchantAuthService(db, merchantUserRepo, merchantRepo, subscriptionRepo, cfg.JWTSecret)
 	merchantPortal := handlers.NewMerchantPortalHandler(
-		merchantAuthSvc, merchantUserRepo, merchantRepo, orderRepo, profileService,
+		merchantAuthSvc, merchantUserRepo, merchantRepo, orderRepo, profileService, subscriptionService,
 	)
 
 	merchantAPI := app.Group("/merchant/api")
@@ -137,6 +142,8 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	merchantProtected.Post("/merchant/regenerate-secret", merchantPortal.RegenerateSecret)
 	merchantProtected.Post("/payment-profile", merchantPortal.SetupPaymentProfile)
 	merchantProtected.Post("/onboarding/complete", merchantPortal.CompleteOnboarding)
+	merchantProtected.Get("/subscription", merchantPortal.Subscription)
+	merchantProtected.Get("/plans", merchantPortal.ListPlans)
 
 	registerAdminUI(app)
 	registerMerchantUI(app)

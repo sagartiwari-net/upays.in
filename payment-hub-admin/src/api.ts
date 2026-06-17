@@ -133,6 +133,13 @@ export const api = {
   unmatched: (offset = '0') =>
     request<{ unmatched: UnmatchedTxn[]; total: number }>('/unmatched?offset=' + offset),
   downloadPlugin: () => download('/downloads/amember-plugin', 'upipays-amember-plugin.zip'),
+  subscriptionPlans: () => request<{ plans: SubscriptionPlan[] }>('/subscription-plans'),
+  merchantSubscription: (id: string) => request<{ subscription: SubscriptionUsage | null }>('/merchants/' + id + '/subscription'),
+  activateSubscription: (id: string, body: { plan_id: string; notes?: string }) =>
+    request<{ ok: boolean; subscription: SubscriptionUsage }>('/merchants/' + id + '/subscription', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 }
 
 export type DashboardStats = {
@@ -189,6 +196,26 @@ export type Merchant = {
   return_url: string
   status: string
   payment_profile_id: string
+}
+
+export type SubscriptionPlan = {
+  id: string
+  slug: string
+  name: string
+  price_inr: number
+  validity_days: number
+  order_limit: number
+  is_recommended: boolean
+}
+
+export type SubscriptionUsage = {
+  plan_name: string
+  plan_slug: string
+  orders_used: number
+  order_limit: number
+  expires_at: string
+  days_left: number
+  is_trial: boolean
 }
 
 export type ParserType = {

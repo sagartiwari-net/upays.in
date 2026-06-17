@@ -22,6 +22,7 @@ var (
 type OrderService struct {
 	orders          *repository.OrderRepository
 	profiles        *ProfileService
+	subs            *SubscriptionService
 	appURL          string
 	expiry          time.Duration
 	paymentProvider string
@@ -30,6 +31,7 @@ type OrderService struct {
 func NewOrderService(
 	orders *repository.OrderRepository,
 	profiles *ProfileService,
+	subs *SubscriptionService,
 	appURL string,
 	expiryMinutes int,
 	paymentProvider string,
@@ -43,6 +45,7 @@ func NewOrderService(
 	return &OrderService{
 		orders:          orders,
 		profiles:        profiles,
+		subs:            subs,
 		appURL:          strings.TrimRight(appURL, "/"),
 		expiry:          time.Duration(expiryMinutes) * time.Minute,
 		paymentProvider: paymentProvider,
@@ -82,8 +85,17 @@ func (s *OrderService) Create(ctx context.Context, merchant *models.Merchant, in
 		return nil, fmt.Errorf("%w: payment profile is inactive", ErrInvalidInput)
 	}
 
+	if s.subs != nil {
+		if err := s.subs.ConsumeOrder(ctx, merchant.ID); err != nil {
+			return nil, err
+		}
+	}
+
 	payAmount, err := AllocateUniquePayAmount(ctx, s.orders, profile.ID, in.Amount)
 	if err != nil {
+		if s.subs != nil {
+			_ = s.subs.ReleaseOrder(ctx, merchant.ID)
+		}
 		return nil, err
 	}
 
@@ -110,6 +122,9 @@ func (s *OrderService) Create(ctx context.Context, merchant *models.Merchant, in
 	}
 
 	if err := s.orders.Create(ctx, order); err != nil {
+		if s.subs != nil {
+			_ = s.subs.ReleaseOrder(ctx, merchant.ID)
+		}
 		if errors.Is(err, repository.ErrDuplicateOrder) {
 			return nil, ErrDuplicateOrder
 		}

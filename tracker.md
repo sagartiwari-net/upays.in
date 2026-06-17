@@ -3,7 +3,7 @@
 > Update this file after every completed task. Recalculate phase % and overall % at the bottom.
 
 **Last updated:** 2026-06-06  
-**Overall project progress:** `42%`
+**Overall project progress:** `55%`
 
 ---
 
@@ -96,19 +96,19 @@
 
 ## Phase 3 — Subscriptions & Limits
 
-**Status:** `Not Started`  
-**Phase progress:** `0%` (0 / 8)
+**Status:** `Done`  
+**Phase progress:** `100%` (8 / 8)
 
 | # | Task | Done |
 |---|------|------|
-| 3.1 | Plans + subscriptions DB tables | ☐ |
-| 3.2 | Seed default plans | ☐ |
-| 3.3 | Order limit check on create | ☐ |
-| 3.4 | Usage widget in merchant dashboard | ☐ |
-| 3.5 | Limit exceeded block + upgrade CTA | ☐ |
-| 3.6 | Plan expiry handling | ☐ |
-| 3.7 | Manual billing flow (UPI pay + admin activate) | ☐ |
-| 3.8 | Free trial (50–100 orders) | ☐ |
+| 3.1 | Plans + subscriptions DB tables | ☑ |
+| 3.2 | Seed default plans | ☑ |
+| 3.3 | Order limit check on create | ☑ |
+| 3.4 | Usage widget in merchant dashboard | ☑ |
+| 3.5 | Limit exceeded block + upgrade CTA | ☑ |
+| 3.6 | Plan expiry handling | ☑ |
+| 3.7 | Manual billing flow (UPI pay + admin activate) | ☑ |
+| 3.8 | Free trial (100 orders / 14 days) | ☑ |
 
 ---
 
@@ -187,20 +187,18 @@
 | 0 | Foundation & Deploy | In Progress | 80% |
 | 1 | Marketing Site | In Progress | 80% |
 | 2 | Merchant Auth | In Progress | 90% |
-| 3 | Subscriptions | Not Started | 0% |
+| 3 | Subscriptions | Done | 100% |
 | 4 | Admin CMS | Not Started | 0% |
 | 5 | Developer Docs | Not Started | 0% |
 | 6 | Plugins & SDKs | In Progress | 17% |
 | 7 | Production Hardening | Not Started | 0% |
 
-**Weighted overall progress:** `42%`
-
-| 2026-06-06 | 2 | Merchant portal: register, login, onboarding, dashboard at /dashboard |
+**Weighted overall progress:** `55%`
 
 ```
-= (40×10 + 70×15 + 0×20 + 0×15 + 0×10 + 0×10 + 17×12 + 0×8) / 100
-= (400 + 1050 + 0 + 0 + 0 + 0 + 204 + 0) / 100
-= 1654 / 100 ≈ 16.5% → 18%
+= (80×10 + 80×15 + 90×20 + 100×15 + 0×10 + 0×10 + 17×12 + 0×8) / 100
+= (800 + 1200 + 1800 + 1500 + 0 + 0 + 204 + 0) / 100
+= 5504 / 100 ≈ 55%
 ```
 
 ---
@@ -216,7 +214,8 @@
 | 2026-06-06 | 1 | Marketing site: home, pricing, FAQ, contact, terms, privacy |
 | 2026-06-06 | 6 | aMember plugin rebranded to `upipays.php` |
 | 2026-06-06 | — | Local build + go test passed |
-| 2026-06-06 | 0 | VPS-DEPLOY.md, install_upipays_full.sql, first-install + copy-imap scripts |
+| 2026-06-06 | 2 | Merchant portal: register, login, onboarding, dashboard at /dashboard |
+| 2026-06-06 | 3 | Subscriptions: plans DB, order limits, trial on signup, billing UI, admin activate |
 
 ---
 

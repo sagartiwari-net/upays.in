@@ -131,3 +131,42 @@ type MerchantUser struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
+
+type SubscriptionPlan struct {
+	ID             string
+	Slug           string
+	Name           string
+	PriceINR       float64
+	ValidityDays   int
+	OrderLimit     int
+	IsRecommended  bool
+	SortOrder      int
+	IsActive       bool
+	FeaturesJSON   string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type MerchantSubscription struct {
+	ID          string
+	MerchantID  string
+	PlanID      string
+	Status      string
+	StartsAt    time.Time
+	ExpiresAt   time.Time
+	OrdersUsed  int
+	OrderLimit  int
+	ActivatedBy string
+	Notes       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	// joined
+	PlanName    string
+	PlanSlug    string
+	PlanPrice   float64
+}
+
+const (
+	SubStatusActive  = "active"
+	SubStatusExpired = "expired"
+)

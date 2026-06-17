@@ -61,6 +61,24 @@ func (h *OrderHandler) Create(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"success": false, "error": "duplicate order_id"})
 		case errors.Is(err, services.ErrMerchantSuspended):
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"success": false, "error": "merchant suspended"})
+		case errors.Is(err, services.ErrPlanLimitExceeded):
+			return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{
+				"success": false,
+				"error":   "plan order limit exceeded — upgrade your subscription at upays.in/dashboard",
+				"code":    "plan_limit_exceeded",
+			})
+		case errors.Is(err, services.ErrPlanExpired):
+			return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{
+				"success": false,
+				"error":   "subscription expired — renew at upays.in/dashboard",
+				"code":    "plan_expired",
+			})
+		case errors.Is(err, services.ErrNoSubscription):
+			return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{
+				"success": false,
+				"error":   "no active subscription — contact support or upgrade at upays.in/dashboard",
+				"code":    "no_subscription",
+			})
 		default:
 			h.log.Error("create order failed", zap.Error(err), zap.String("merchant", merchant.Domain))
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"success": false, "error": "failed to create order"})

@@ -1,6 +1,6 @@
 import { Navigate, NavLink, Outlet, Route, Routes, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { api, clearToken, copyText, getToken, setToken, Merchant, MerchantUser, DashboardStats, Order } from './api'
+import { api, clearToken, copyText, getToken, setToken, Merchant, MerchantUser, DashboardStats, Order, SubscriptionUsage } from './api'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -200,6 +200,7 @@ function Shell() {
         <nav className="nav">
           <NavLink to="/" end><i className="fas fa-chart-line" /> Dashboard</NavLink>
           <NavLink to="/orders"><i className="fas fa-receipt" /> Transactions</NavLink>
+          <NavLink to="/billing"><i className="fas fa-credit-card" /> Billing</NavLink>
           <NavLink to="/settings"><i className="fas fa-cog" /> Settings</NavLink>
         </nav>
         <div className="logout">
@@ -213,13 +214,47 @@ function Shell() {
   )
 }
 
+function UsageWidget({ sub }: { sub: SubscriptionUsage | null }) {
+  if (!sub) return null
+  const nearLimit = sub.usage_percent >= 80
+  const atLimit = sub.orders_used >= sub.order_limit
+  return (
+    <div className={`card usage-card${atLimit ? ' usage-danger' : nearLimit ? ' usage-warn' : ''}`} style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div className="label">{sub.is_trial ? 'Free trial' : 'Current plan'} — {sub.plan_name}</div>
+          <div className="value" style={{ fontSize: 22 }}>
+            {sub.orders_used.toLocaleString()} / {sub.order_limit.toLocaleString()} orders
+          </div>
+          <p className="muted" style={{ marginTop: 6 }}>
+            {sub.days_left} days left · expires {new Date(sub.expires_at).toLocaleDateString()}
+          </p>
+        </div>
+        {(atLimit || nearLimit) && (
+          <NavLink to="/billing" className="btn" style={{ textDecoration: 'none' }}>
+            {atLimit ? 'Upgrade now' : 'View plans'}
+          </NavLink>
+        )}
+      </div>
+      <div className="usage-bar" style={{ marginTop: 12 }}>
+        <div className="usage-fill" style={{ width: `${Math.min(sub.usage_percent, 100)}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function DashboardHome() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
-  useEffect(() => { api.dashboard().then(setStats).catch(() => {}) }, [])
+  const [sub, setSub] = useState<SubscriptionUsage | null>(null)
+  useEffect(() => {
+    api.dashboard().then(setStats).catch(() => {})
+    api.subscription().then(r => setSub(r.subscription)).catch(() => {})
+  }, [])
   if (!stats) return <p className="muted">Loading…</p>
   return (
     <>
       <header className="page-header"><div><h1>Dashboard</h1><p>Your payment overview</p></div></header>
+      <UsageWidget sub={sub} />
       <div className="stats-grid">
         <div className="stat-card green">
           <div className="stat-label">Today&apos;s Revenue</div>
@@ -266,6 +301,42 @@ function OrdersPage() {
             {orders.length === 0 && <tr><td colSpan={5} className="muted" style={{ textAlign: 'center' }}>No transactions yet</td></tr>}
           </tbody>
         </table>
+      </div>
+    </>
+  )
+}
+
+function BillingPage() {
+  const [sub, setSub] = useState<SubscriptionUsage | null>(null)
+  const [plans, setPlans] = useState<{ id: string; name: string; price_inr: number; order_limit: number; validity_days: number; is_recommended: boolean }[]>([])
+
+  useEffect(() => {
+    api.subscription().then(r => setSub(r.subscription)).catch(() => {})
+    api.plans().then(r => setPlans(r.plans)).catch(() => {})
+  }, [])
+
+  return (
+    <>
+      <header className="page-header"><div><h1>Billing</h1><p>Subscription & plan limits</p></div></header>
+      <UsageWidget sub={sub} />
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3 className="card-title">How to upgrade</h3>
+        <ol style={{ paddingLeft: 20, lineHeight: 1.8 }}>
+          <li>Pay the plan amount via UPI to <strong>upays.in@upi</strong> (or contact support for payment details)</li>
+          <li>Email <a href="mailto:support@upays.in">support@upays.in</a> with your registered email and UTR</li>
+          <li>We activate your plan within a few hours</li>
+        </ol>
+      </div>
+      <h3 style={{ marginBottom: 16 }}>Available plans</h3>
+      <div className="stats-grid">
+        {plans.map(p => (
+          <div key={p.id} className={`stat-card${p.is_recommended ? ' blue' : ''}`}>
+            {p.is_recommended && <span className="badge success" style={{ marginBottom: 8 }}>Recommended</span>}
+            <div className="stat-label">{p.name}</div>
+            <div className="stat-value">₹{p.price_inr}</div>
+            <p className="muted">{p.order_limit.toLocaleString()} orders / {p.validity_days} days</p>
+          </div>
+        ))}
       </div>
     </>
   )
@@ -337,6 +408,7 @@ export default function App() {
       <Route element={<Shell />}>
         <Route index element={<DashboardHome />} />
         <Route path="orders" element={<OrdersPage />} />
+        <Route path="billing" element={<BillingPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>

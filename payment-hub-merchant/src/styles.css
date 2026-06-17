@@ -667,6 +667,23 @@ tr:last-child td { border-bottom: none; }
   border-color: var(--primary-purple);
 }
 
+.usage-bar {
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-purple), #7c3aed);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.usage-card.usage-warn .usage-fill { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.usage-card.usage-danger .usage-fill { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
 @media (max-width: 1200px) {
   .dashboard-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }

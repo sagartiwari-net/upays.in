@@ -17,6 +17,7 @@ type MerchantPortalHandler struct {
 	merchants *repository.MerchantRepository
 	orders    *repository.OrderRepository
 	profiles  *services.ProfileService
+	subs      *services.SubscriptionService
 }
 
 func NewMerchantPortalHandler(
@@ -25,9 +26,10 @@ func NewMerchantPortalHandler(
 	merchants *repository.MerchantRepository,
 	orders *repository.OrderRepository,
 	profiles *services.ProfileService,
+	subs *services.SubscriptionService,
 ) *MerchantPortalHandler {
 	return &MerchantPortalHandler{
-		auth: auth, users: users, merchants: merchants, orders: orders, profiles: profiles,
+		auth: auth, users: users, merchants: merchants, orders: orders, profiles: profiles, subs: subs,
 	}
 }
 
@@ -130,6 +132,37 @@ func (h *MerchantPortalHandler) Dashboard(c *fiber.Ctx) error {
 		"pending_orders": stats.PendingOrders,
 		"success_rate":   successRate,
 	})
+}
+
+func (h *MerchantPortalHandler) Subscription(c *fiber.Ctx) error {
+	merchantID := c.Locals("merchant_id").(string)
+	usage, err := h.subs.GetUsage(c.Context(), merchantID)
+	if err != nil {
+		if errors.Is(err, services.ErrNoSubscription) {
+			return c.JSON(fiber.Map{"subscription": nil})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load subscription"})
+	}
+	return c.JSON(fiber.Map{"subscription": usage})
+}
+
+func (h *MerchantPortalHandler) ListPlans(c *fiber.Ctx) error {
+	plans, err := h.subs.ListPlans(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to list plans"})
+	}
+	out := make([]fiber.Map, 0, len(plans))
+	for _, p := range plans {
+		if p.Slug == "trial" {
+			continue
+		}
+		out = append(out, fiber.Map{
+			"id": p.ID, "slug": p.Slug, "name": p.Name, "price_inr": p.PriceINR,
+			"validity_days": p.ValidityDays, "order_limit": p.OrderLimit,
+			"is_recommended": p.IsRecommended, "features_json": p.FeaturesJSON,
+		})
+	}
+	return c.JSON(fiber.Map{"plans": out})
 }
 
 func (h *MerchantPortalHandler) ListOrders(c *fiber.Ctx) error {

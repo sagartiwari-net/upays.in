@@ -1,6 +1,6 @@
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { api, clearToken, getToken, setToken, copyText, imapHealthDot, DashboardStats, MerchantRevenue, IMAPAlert, Order, Merchant, Profile, ParserType } from './api'
+import { api, clearToken, getToken, setToken, copyText, imapHealthDot, DashboardStats, MerchantRevenue, IMAPAlert, Order, Merchant, Profile, ParserType, SubscriptionPlan, SubscriptionUsage } from './api'
 import AddWebsite from './AddWebsite'
 import Unmatched from './Unmatched'
 import Webhooks from './Webhooks'
@@ -294,13 +294,18 @@ function Orders() {
 function Merchants() {
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [editMerchant, setEditMerchant] = useState<Merchant | null>(null)
+  const [merchantSub, setMerchantSub] = useState<SubscriptionUsage | null>(null)
+  const [activatePlanId, setActivatePlanId] = useState('')
+  const [activateNotes, setActivateNotes] = useState('')
   const [newSecret, setNewSecret] = useState<{ key: string; secret: string } | null>(null)
   const [editForm, setEditForm] = useState({ name: '', domain: '', webhook_url: '', return_url: '', status: 'active' })
 
   function reload() {
     api.merchants().then(r => setMerchants(r.merchants))
     api.profiles().then(r => setProfiles(r.profiles))
+    api.subscriptionPlans().then(r => setPlans(r.plans)).catch(() => {})
   }
   useEffect(() => { reload() }, [])
 
@@ -324,6 +329,23 @@ function Merchants() {
       return_url: m.return_url || '',
       status: m.status,
     })
+    setActivatePlanId('')
+    setActivateNotes('')
+    setMerchantSub(null)
+    api.merchantSubscription(m.id).then(r => setMerchantSub(r.subscription)).catch(() => {})
+  }
+
+  async function activatePlan(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editMerchant || !activatePlanId) return
+    try {
+      const res = await api.activateSubscription(editMerchant.id, { plan_id: activatePlanId, notes: activateNotes })
+      setMerchantSub(res.subscription)
+      setActivateNotes('')
+      alert('Plan activated')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed')
+    }
   }
 
   async function saveEdit(e: React.FormEvent) {
@@ -392,6 +414,27 @@ function Merchants() {
               <option value="active">active</option>
               <option value="suspended">suspended</option>
             </select>
+            {merchantSub && (
+              <div className="muted" style={{ marginTop: 16, padding: 12, background: '#f8fafc', borderRadius: 8 }}>
+                <strong>Subscription:</strong> {merchantSub.plan_name}
+                {' '}({merchantSub.orders_used}/{merchantSub.order_limit} orders, {merchantSub.days_left}d left)
+              </div>
+            )}
+            <fieldset style={{ marginTop: 16, border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
+              <legend>Activate plan (manual billing)</legend>
+              <label>Plan</label>
+              <select value={activatePlanId} onChange={e => setActivatePlanId(e.target.value)}>
+                <option value="">— select plan —</option>
+                {plans.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} — ₹{p.price_inr} ({p.order_limit.toLocaleString()} orders)</option>
+                ))}
+              </select>
+              <label style={{ marginTop: 8 }}>Notes (UTR, payment ref)</label>
+              <input value={activateNotes} onChange={e => setActivateNotes(e.target.value)} placeholder="UPI UTR / payment note" />
+              <button className="btn secondary" type="button" style={{ marginTop: 8 }} onClick={activatePlan} disabled={!activatePlanId}>
+                Activate plan
+              </button>
+            </fieldset>
             <div className="muted" style={{ marginTop: 12 }}>
               API Key: <code>{editMerchant.api_key}</code>
               <button type="button" className="btn secondary btn-sm" style={{ marginLeft: 8 }} onClick={() => copyText(editMerchant.api_key)}>Copy</button>

@@ -24,6 +24,7 @@ type AdminHandler struct {
 	webhooks    *repository.WebhookLogRepo
 	notifier    *services.MerchantNotifier
 	emailWorker emailverify.ProfilePoller
+	subs        *services.SubscriptionService
 }
 
 func NewAdminHandler(
@@ -36,11 +37,12 @@ func NewAdminHandler(
 	webhooks *repository.WebhookLogRepo,
 	notifier *services.MerchantNotifier,
 	emailWorker emailverify.ProfilePoller,
+	subs *services.SubscriptionService,
 ) *AdminHandler {
 	return &AdminHandler{
 		auth: auth, profiles: profiles, profileRepo: profileRepo, merchants: merchants,
 		orders: orders, bankTxns: bankTxns, webhooks: webhooks,
-		notifier: notifier, emailWorker: emailWorker,
+		notifier: notifier, emailWorker: emailWorker, subs: subs,
 	}
 }
 
@@ -459,4 +461,53 @@ func merchantResponse(m *models.Merchant, revealSecret bool) fiber.Map {
 		resp["api_secret"] = security.MaskSecret(m.APISecret)
 	}
 	return resp
+}
+
+func (h *AdminHandler) ListSubscriptionPlans(c *fiber.Ctx) error {
+	plans, err := h.subs.ListPlans(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to list plans"})
+	}
+	out := make([]fiber.Map, 0, len(plans))
+	for _, p := range plans {
+		out = append(out, fiber.Map{
+			"id": p.ID, "slug": p.Slug, "name": p.Name, "price_inr": p.PriceINR,
+			"validity_days": p.ValidityDays, "order_limit": p.OrderLimit,
+			"is_recommended": p.IsRecommended, "features_json": p.FeaturesJSON,
+		})
+	}
+	return c.JSON(fiber.Map{"plans": out})
+}
+
+func (h *AdminHandler) GetMerchantSubscription(c *fiber.Ctx) error {
+	usage, err := h.subs.GetUsage(c.Context(), c.Params("id"))
+	if err != nil {
+		if errors.Is(err, services.ErrNoSubscription) {
+			return c.JSON(fiber.Map{"subscription": nil})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load subscription"})
+	}
+	return c.JSON(fiber.Map{"subscription": usage})
+}
+
+func (h *AdminHandler) ActivateMerchantSubscription(c *fiber.Ctx) error {
+	var body struct {
+		PlanID string `json:"plan_id"`
+		Notes  string `json:"notes"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.PlanID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "plan_id required"})
+	}
+	adminEmail, _ := c.Locals("admin_email").(string)
+	if err := h.subs.ActivatePlan(c.Context(), c.Params("id"), body.PlanID, adminEmail, body.Notes); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "plan or merchant not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	usage, _ := h.subs.GetUsage(c.Context(), c.Params("id"))
+	return c.JSON(fiber.Map{"ok": true, "subscription": usage})
 }
