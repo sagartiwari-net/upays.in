@@ -1,0 +1,48 @@
+-- Safe fix: run in phpMyAdmin if order create returns HTTP 500
+-- Database: paymentsystem
+
+-- 000006 columns (skip line if "Duplicate column" error)
+ALTER TABLE orders ADD COLUMN pay_amount DECIMAL(12,2) NULL AFTER amount;
+ALTER TABLE orders ADD COLUMN payment_provider VARCHAR(20) NOT NULL DEFAULT 'upi_email' AFTER currency;
+ALTER TABLE orders ADD COLUMN customer_utr VARCHAR(32) NULL AFTER phonepe_txn_id;
+UPDATE orders SET pay_amount = amount WHERE pay_amount IS NULL;
+ALTER TABLE orders MODIFY pay_amount DECIMAL(12,2) NOT NULL;
+
+CREATE TABLE IF NOT EXISTS payment_profiles (
+    id              CHAR(36) PRIMARY KEY,
+    name            VARCHAR(100) NOT NULL,
+    upi_id          VARCHAR(100) NOT NULL,
+    payee_name      VARCHAR(100) NOT NULL DEFAULT 'UPIPays',
+    bank_code       VARCHAR(20) NOT NULL DEFAULT 'hdfc',
+    imap_host       VARCHAR(255) NOT NULL,
+    imap_port       INT NOT NULL DEFAULT 993,
+    imap_user       VARCHAR(255) NOT NULL,
+    imap_password   VARCHAR(255) NOT NULL,
+    sender_filter   VARCHAR(255) NOT NULL,
+    parser_type     VARCHAR(20) NOT NULL DEFAULT 'hdfc',
+    is_active       TINYINT(1) NOT NULL DEFAULT 1,
+    created_at      DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at      DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS processed_bank_txns (
+    id              CHAR(36) PRIMARY KEY,
+    utr             VARCHAR(32) NOT NULL UNIQUE,
+    email_message_id VARCHAR(255) NOT NULL,
+    amount          DECIMAL(12,2) NOT NULL,
+    order_id        CHAR(36) NULL,
+    raw_excerpt     TEXT NULL,
+    created_at      DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    KEY idx_processed_order (order_id),
+    CONSTRAINT fk_processed_order FOREIGN KEY (order_id) REFERENCES orders(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 000007 columns
+ALTER TABLE merchants ADD COLUMN payment_profile_id CHAR(36) NULL AFTER status;
+ALTER TABLE orders ADD COLUMN payment_profile_id CHAR(36) NULL AFTER payment_provider;
+ALTER TABLE processed_bank_txns ADD COLUMN payment_profile_id CHAR(36) NULL AFTER order_id;
+
+-- 000008 IMAP health columns (skip if "Duplicate column")
+ALTER TABLE payment_profiles ADD COLUMN imap_last_ok_at DATETIME(3) NULL AFTER is_active;
+ALTER TABLE payment_profiles ADD COLUMN imap_last_error VARCHAR(500) NULL AFTER imap_last_ok_at;
+ALTER TABLE payment_profiles ADD COLUMN imap_last_checked_at DATETIME(3) NULL AFTER imap_last_error;

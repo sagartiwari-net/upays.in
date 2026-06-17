@@ -28,5 +28,9 @@ dist/
 .vscode/
 *.swp
 
-# Build output
-payment-hub/web/admin/assets/
+# Build output (rebuilt on deploy; optional to commit admin assets)
+payment-hub/bin/
+payment-hub/logs/
+
+# Keep admin built assets for VPS deploy without npm:
+# payment-hub/web/admin/assets/ — committed intentionally

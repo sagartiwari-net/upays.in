@@ -26,15 +26,19 @@ Built on top of the existing **Payment Hub** core (Go + React): UPI QR checkout,
 
 ---
 
-## Repo structure (planned)
+## Repo structure (current)
 
 ```
-upays.in/                    ← this repo (planning + docs; code folders added per phase)
-├── payment-hub/             ← Phase 0: fork/deploy from existing hub (later)
-├── upipays-web/             ← Phase 1: marketing site (later)
-├── upipays-merchant/        ← Phase 2: merchant dashboard (later)
-├── upipays-docs/            ← Phase 5: developer docs (later)
-└── plugins/                 ← Phase 6: WooCommerce, aMember, etc. (later)
+upays.in/
+├── PLAN.md                    ← phased roadmap
+├── tracker.md                 ← progress %
+├── LOCAL-SETUP.md             ← credentials (local only, gitignored)
+├── payment-hub/               ← Go API + marketing static + admin build
+│   ├── web/public/            ← Homepage, pricing, FAQ, etc.
+│   ├── web/admin/             ← Built super-admin React app
+│   ├── scripts/vps-deploy-upays.sh
+│   └── deploy/upays.in.conf   ← Reverse proxy config
+└── payment-hub-admin/         ← React admin source (build → payment-hub/web/admin)
 ```
 
 ---
