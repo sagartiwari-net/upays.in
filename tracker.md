@@ -214,6 +214,17 @@
 | 2026-06-06 | 1 | Marketing site: home, pricing, FAQ, contact, terms, privacy |
 | 2026-06-06 | 6 | aMember plugin rebranded to `upipays.php` |
 | 2026-06-06 | — | Local build + go test passed |
+| 2026-06-06 | 0 | VPS-DEPLOY.md, install_upipays_full.sql, first-install + copy-imap scripts |
+
+---
+
+## VPS status (Sagar)
+
+- [x] git clone at `/www/wwwroot/upays.in`
+- [x] `.env` created (DB: upipays / user: upipays)
+- [ ] IMAP app password copied from old hub
+- [ ] `vps-first-install.sh` run
+- [ ] aaPanel reverse proxy + SSL
 
 ---
 
