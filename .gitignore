@@ -1,0 +1,32 @@
+# Private credentials — NEVER commit
+LOCAL-SETUP.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Go
+bin/
+*.exe
+
+# Node
+node_modules/
+dist/
+.next/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Build output
+payment-hub/web/admin/assets/
