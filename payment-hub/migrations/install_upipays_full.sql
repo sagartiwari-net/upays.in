@@ -176,8 +176,8 @@ CREATE TABLE IF NOT EXISTS merchant_subscriptions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO subscription_plans (id, slug, name, price_inr, validity_days, order_limit, is_recommended, sort_order, features_json) VALUES
-('plan-trial-001', 'trial', 'Free Trial', 0, 14, 100, 0, 0,
- '[{"text":"100 QR requests","included":true},{"text":"14 days","included":true},{"text":"0% transaction fee","included":true}]'),
+('plan-trial-001', 'trial', 'Free Trial', 0, 7, 20, 0, 0,
+ '[{"text":"20 QR requests","included":true},{"text":"7 days","included":true},{"text":"0% transaction fee","included":true}]'),
 ('plan-starter-001', 'starter', 'Starter', 499, 28, 5000, 0, 1,
  '[{"text":"5,000 QR requests","included":true},{"text":"0% transaction fee","included":true},{"text":"Webhook callbacks","included":true}]'),
 ('plan-growth-001', 'growth', 'Growth', 999, 28, 10000, 0, 2,

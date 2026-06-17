@@ -74,6 +74,7 @@ function Register() {
         </div>
         <h1>Create account</h1>
         <p>Start accepting UPI payments in minutes</p>
+        <p className="muted" style={{ marginBottom: 16, textAlign: 'center', fontSize: 14 }}>Free trial: 20 QR codes · 7 days</p>
         <form onSubmit={submit}>
           <label>Your name</label>
           <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />

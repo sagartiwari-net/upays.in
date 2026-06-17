@@ -29,7 +29,8 @@ if [[ -f .env ]]; then
   MYSQL=(mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME")
   for f in migrations/000009_merchant_users.up.sql \
            migrations/000010_subscriptions.up.sql \
-           migrations/000011_cms_pages.up.sql; do
+           migrations/000011_cms_pages.up.sql \
+           migrations/000012_update_trial_limits.up.sql; do
     if [[ -f "$f" ]]; then
       echo "    $f"
       "${MYSQL[@]}" < "$f" 2>/dev/null || true

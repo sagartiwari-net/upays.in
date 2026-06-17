@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS merchant_subscriptions (
 
 -- Default plans (match marketing pricing page)
 INSERT INTO subscription_plans (id, slug, name, price_inr, validity_days, order_limit, is_recommended, sort_order, features_json) VALUES
-('plan-trial-001', 'trial', 'Free Trial', 0, 14, 100, 0, 0,
- '[{"text":"100 QR requests","included":true},{"text":"14 days","included":true},{"text":"0% transaction fee","included":true}]'),
+('plan-trial-001', 'trial', 'Free Trial', 0, 7, 20, 0, 0,
+ '[{"text":"20 QR requests","included":true},{"text":"7 days","included":true},{"text":"0% transaction fee","included":true}]'),
 ('plan-starter-001', 'starter', 'Starter', 499, 28, 5000, 0, 1,
  '[{"text":"5,000 QR requests","included":true},{"text":"0% transaction fee","included":true},{"text":"Webhook callbacks","included":true}]'),
 ('plan-growth-001', 'growth', 'Growth', 999, 28, 10000, 0, 2,
@@ -62,9 +62,9 @@ SELECT
     'plan-trial-001',
     'active',
     UTC_TIMESTAMP(3),
-    DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 14 DAY),
+    DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 7 DAY),
     COALESCE((SELECT COUNT(*) FROM orders o WHERE o.merchant_id = m.id), 0),
-    100,
+    20,
     'backfill trial'
 FROM merchants m
 WHERE NOT EXISTS (

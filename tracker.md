@@ -108,7 +108,7 @@
 | 3.5 | Limit exceeded block + upgrade CTA | ☑ |
 | 3.6 | Plan expiry handling | ☑ |
 | 3.7 | Manual billing flow (UPI pay + admin activate) | ☑ |
-| 3.8 | Free trial (100 orders / 14 days) | ☑ |
+| 3.8 | Free trial (20 QR / 7 days) | ☑ |
 
 ---
 

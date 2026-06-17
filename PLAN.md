@@ -142,7 +142,7 @@
 | Business | ₹1,999 | 28 days | 15,000 |
 | Pro | ₹4,999 | 28 days | 25,000 |
 
-**Free trial:** 50–100 orders (decide before launch)
+**Free trial:** 20 QR requests, 7 days
 
 ### Deliverables
 
@@ -262,7 +262,7 @@ Record final decisions here when confirmed:
 | Decision | Choice | Date |
 |----------|--------|------|
 | Marketing site stack | _TBD: Next.js vs Astro_ | — |
-| Free trial orders | _TBD: 50 or 100_ | — |
+| Free trial orders | 20 QR / 7 days | — |
 | Billing v1 | Manual UPI + admin activate | — |
 | buyahref.com hub | Separate — keep running independently | — |
 | Design theme | Light + purple accent (match admin) | — |
