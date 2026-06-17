@@ -4,9 +4,10 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/sagartiwari-net/upays.in/payment-hub/internal/api/handlers"
 )
 
-func registerPublicSite(app *fiber.App) {
+func registerPublicSite(app *fiber.App, publicHandler *handlers.PublicHandler) {
 	root := "./web/public"
 	if _, err := os.Stat(root + "/index.html"); os.IsNotExist(err) {
 		return
@@ -32,4 +33,8 @@ func registerPublicSite(app *fiber.App) {
 	app.Get("/register", func(c *fiber.Ctx) error {
 		return c.Redirect("/dashboard/register", fiber.StatusTemporaryRedirect)
 	})
+
+	if publicHandler != nil {
+		app.Get("/:slug", publicHandler.ServeCMSPage)
+	}
 }

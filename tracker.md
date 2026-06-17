@@ -3,7 +3,7 @@
 > Update this file after every completed task. Recalculate phase % and overall % at the bottom.
 
 **Last updated:** 2026-06-06  
-**Overall project progress:** `55%`
+**Overall project progress:** `65%`
 
 ---
 
@@ -114,17 +114,17 @@
 
 ## Phase 4 — Super Admin CMS
 
-**Status:** `Not Started`  
-**Phase progress:** `0%` (0 / 6)
+**Status:** `Done`  
+**Phase progress:** `100%` (6 / 6)
 
 | # | Task | Done |
 |---|------|------|
-| 4.1 | Plans manager UI (CRUD) | ☐ |
-| 4.2 | Plan features editor (check/cross items) | ☐ |
-| 4.3 | Pages manager UI (CRUD) | ☐ |
-| 4.4 | Public API for plans + pages | ☐ |
-| 4.5 | Marketing site reads from API | ☐ |
-| 4.6 | Draft preview mode | ☐ |
+| 4.1 | Plans manager UI (CRUD) | ☑ |
+| 4.2 | Plan features editor (JSON) | ☑ |
+| 4.3 | Pages manager UI (CRUD) | ☑ |
+| 4.4 | Public API for plans + pages | ☑ |
+| 4.5 | Marketing site reads from API | ☑ |
+| 4.6 | Draft preview mode | ☑ |
 
 ---
 
@@ -188,17 +188,17 @@
 | 1 | Marketing Site | In Progress | 80% |
 | 2 | Merchant Auth | In Progress | 90% |
 | 3 | Subscriptions | Done | 100% |
-| 4 | Admin CMS | Not Started | 0% |
+| 4 | Admin CMS | Done | 100% |
 | 5 | Developer Docs | Not Started | 0% |
 | 6 | Plugins & SDKs | In Progress | 17% |
 | 7 | Production Hardening | Not Started | 0% |
 
-**Weighted overall progress:** `55%`
+**Weighted overall progress:** `65%`
 
 ```
-= (80×10 + 80×15 + 90×20 + 100×15 + 0×10 + 0×10 + 17×12 + 0×8) / 100
-= (800 + 1200 + 1800 + 1500 + 0 + 0 + 204 + 0) / 100
-= 5504 / 100 ≈ 55%
+= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 0×10 + 17×12 + 0×8) / 100
+= (800 + 1200 + 1800 + 1500 + 1000 + 0 + 204 + 0) / 100
+= 6504 / 100 ≈ 65%
 ```
 
 ---
@@ -216,6 +216,7 @@
 | 2026-06-06 | — | Local build + go test passed |
 | 2026-06-06 | 2 | Merchant portal: register, login, onboarding, dashboard at /dashboard |
 | 2026-06-06 | 3 | Subscriptions: plans DB, order limits, trial on signup, billing UI, admin activate |
+| 2026-06-06 | 4 | Admin CMS: plans/pages manager, public API, dynamic pricing page |
 
 ---
 

@@ -65,6 +65,24 @@ func (s *SubscriptionService) ListPlans(ctx context.Context) ([]models.Subscript
 	return s.subs.ListPlans(ctx, true)
 }
 
+func (s *SubscriptionService) ListAllPlans(ctx context.Context) ([]models.SubscriptionPlan, error) {
+	return s.subs.ListPlans(ctx, false)
+}
+
+func (s *SubscriptionService) CreatePlan(ctx context.Context, in repository.PlanInput) (*models.SubscriptionPlan, error) {
+	if in.IsRecommended {
+		_ = s.subs.ClearRecommendedExcept(ctx, "")
+	}
+	return s.subs.CreatePlan(ctx, in)
+}
+
+func (s *SubscriptionService) UpdatePlan(ctx context.Context, id string, in repository.PlanInput) (*models.SubscriptionPlan, error) {
+	if in.IsRecommended {
+		_ = s.subs.ClearRecommendedExcept(ctx, id)
+	}
+	return s.subs.UpdatePlan(ctx, id, in)
+}
+
 func usageFromSub(sub *models.MerchantSubscription) *SubscriptionUsage {
 	limit := sub.OrderLimit
 	if limit <= 0 {

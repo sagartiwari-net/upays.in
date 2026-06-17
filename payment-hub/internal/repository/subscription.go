@@ -310,3 +310,97 @@ func (r *SubscriptionRepository) ReleaseOrderSlot(ctx context.Context, merchantI
 	_, err := r.db.ExecContext(ctx, q, merchantID, models.SubStatusActive)
 	return err
 }
+
+type PlanInput struct {
+	Slug          string
+	Name          string
+	PriceINR      float64
+	ValidityDays  int
+	OrderLimit    int
+	IsRecommended bool
+	SortOrder     int
+	IsActive      bool
+	FeaturesJSON  string
+}
+
+func (r *SubscriptionRepository) CreatePlan(ctx context.Context, in PlanInput) (*models.SubscriptionPlan, error) {
+	rec, active := 0, 1
+	if in.IsRecommended {
+		rec = 1
+	}
+	if !in.IsActive {
+		active = 0
+	}
+	p := &models.SubscriptionPlan{
+		ID:           security.NewID(),
+		Slug:         in.Slug,
+		Name:         in.Name,
+		PriceINR:     in.PriceINR,
+		ValidityDays: in.ValidityDays,
+		OrderLimit:   in.OrderLimit,
+		IsRecommended: in.IsRecommended,
+		SortOrder:    in.SortOrder,
+		IsActive:     in.IsActive,
+		FeaturesJSON: in.FeaturesJSON,
+	}
+	const q = `
+		INSERT INTO subscription_plans
+		(id, slug, name, price_inr, validity_days, order_limit, is_recommended, sort_order, is_active, features_json)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+	var features interface{}
+	if in.FeaturesJSON != "" {
+		features = in.FeaturesJSON
+	}
+	_, err := r.db.ExecContext(ctx, q,
+		p.ID, p.Slug, p.Name, p.PriceINR, p.ValidityDays, p.OrderLimit, rec, p.SortOrder, active, features,
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return nil, ErrDuplicateOrder
+		}
+		return nil, err
+	}
+	return r.GetPlanByID(ctx, p.ID)
+}
+
+func (r *SubscriptionRepository) UpdatePlan(ctx context.Context, id string, in PlanInput) (*models.SubscriptionPlan, error) {
+	rec, active := 0, 1
+	if in.IsRecommended {
+		rec = 1
+	}
+	if !in.IsActive {
+		active = 0
+	}
+	const q = `
+		UPDATE subscription_plans SET
+			slug = ?, name = ?, price_inr = ?, validity_days = ?, order_limit = ?,
+			is_recommended = ?, sort_order = ?, is_active = ?, features_json = ?
+		WHERE id = ?
+	`
+	var features interface{}
+	if in.FeaturesJSON != "" {
+		features = in.FeaturesJSON
+	}
+	res, err := r.db.ExecContext(ctx, q,
+		in.Slug, in.Name, in.PriceINR, in.ValidityDays, in.OrderLimit,
+		rec, in.SortOrder, active, features, id,
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return nil, ErrDuplicateOrder
+		}
+		return nil, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return nil, ErrNotFound
+	}
+	return r.GetPlanByID(ctx, id)
+}
+
+func (r *SubscriptionRepository) ClearRecommendedExcept(ctx context.Context, exceptID string) error {
+	const q = `UPDATE subscription_plans SET is_recommended = 0 WHERE id != ?`
+	_, err := r.db.ExecContext(ctx, q, exceptID)
+	return err
+}

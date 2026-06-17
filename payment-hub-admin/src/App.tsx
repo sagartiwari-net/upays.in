@@ -1,6 +1,6 @@
 import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { api, clearToken, getToken, setToken, copyText, imapHealthDot, DashboardStats, MerchantRevenue, IMAPAlert, Order, Merchant, Profile, ParserType, SubscriptionPlan, SubscriptionUsage } from './api'
+import { api, clearToken, getToken, setToken, copyText, imapHealthDot, DashboardStats, MerchantRevenue, IMAPAlert, Order, Merchant, Profile, ParserType, SubscriptionPlan, SubscriptionUsage, CMSPage } from './api'
 import AddWebsite from './AddWebsite'
 import Unmatched from './Unmatched'
 import Webhooks from './Webhooks'
@@ -57,6 +57,8 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   '/websites/add': { title: 'Add Website', subtitle: 'Onboard a new merchant site' },
   '/merchants': { title: 'Manage Keys', subtitle: 'API keys and merchant credentials' },
   '/profiles': { title: 'UPI Profiles', subtitle: 'Configure UPI + IMAP for auto-verification' },
+  '/plans': { title: 'Pricing Plans', subtitle: 'Edit subscription plans shown on marketing site' },
+  '/pages': { title: 'CMS Pages', subtitle: 'Create dynamic pages like /about without deploy' },
 }
 
 function PageHeader() {
@@ -95,6 +97,9 @@ function Shell() {
           <NavLink to="/orders"><i className="fas fa-exchange-alt" /> Transactions</NavLink>
           <NavLink to="/merchants"><i className="fas fa-key" /> Manage Keys</NavLink>
           <NavLink to="/profiles"><i className="fas fa-wallet" /> UPI Profiles</NavLink>
+          <div className="nav-divider" />
+          <NavLink to="/plans"><i className="fas fa-tags" /> Plans</NavLink>
+          <NavLink to="/pages"><i className="fas fa-file-alt" /> Pages</NavLink>
           <div className="nav-divider" />
           <NavLink to="/websites/add"><i className="fas fa-plus-circle" /> Add Website</NavLink>
           <NavLink to="/unmatched"><i className="fas fa-unlink" /> Unmatched</NavLink>
@@ -653,6 +658,186 @@ function Profiles() {
   )
 }
 
+function PlansManager() {
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([])
+  const [edit, setEdit] = useState<SubscriptionPlan | null>(null)
+  const [creating, setCreating] = useState(false)
+  const empty = { slug: '', name: '', price_inr: 499, validity_days: 28, order_limit: 5000, is_recommended: false, sort_order: 0, is_active: true, features_json: '[]' }
+  const [form, setForm] = useState(empty)
+
+  function reload() { api.subscriptionPlans().then(r => setPlans(r.plans)).catch(() => {}) }
+  useEffect(() => { reload() }, [])
+
+  function openEdit(p: SubscriptionPlan) {
+    setEdit(p)
+    setCreating(false)
+    setForm({ ...p, features_json: (p as SubscriptionPlan & { features_json?: string }).features_json || '[]' })
+  }
+
+  function openCreate() {
+    setEdit(null)
+    setCreating(true)
+    setForm(empty)
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      if (creating) await api.createPlan(form)
+      else if (edit) await api.updatePlan(edit.id, form)
+      setEdit(null)
+      setCreating(false)
+      reload()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed')
+    }
+  }
+
+  if (edit || creating) {
+    return (
+      <form className="form form-wide" onSubmit={save}>
+        <h3>{creating ? 'New plan' : 'Edit plan'}</h3>
+        <label>Slug</label>
+        <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} required disabled={!!edit && edit.slug === 'trial'} />
+        <label>Name</label>
+        <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+        <label>Price (INR)</label>
+        <input type="number" value={form.price_inr} onChange={e => setForm({ ...form, price_inr: +e.target.value })} />
+        <label>Validity (days)</label>
+        <input type="number" value={form.validity_days} onChange={e => setForm({ ...form, validity_days: +e.target.value })} />
+        <label>Order limit</label>
+        <input type="number" value={form.order_limit} onChange={e => setForm({ ...form, order_limit: +e.target.value })} />
+        <label>Sort order</label>
+        <input type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: +e.target.value })} />
+        <label>Features JSON</label>
+        <textarea rows={4} value={form.features_json} onChange={e => setForm({ ...form, features_json: e.target.value })} placeholder='[{"text":"5,000 QR requests","included":true}]' />
+        <label className="radio-label"><input type="checkbox" checked={form.is_recommended} onChange={e => setForm({ ...form, is_recommended: e.target.checked })} /> Recommended badge</label>
+        <label className="radio-label"><input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Active</label>
+        <div className="actions">
+          <button className="btn" type="submit">Save</button>
+          <button className="btn secondary" type="button" onClick={() => { setEdit(null); setCreating(false) }}>Cancel</button>
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <>
+      <div className="toolbar"><button className="btn" onClick={openCreate}><i className="fas fa-plus" /> New plan</button></div>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Price</th><th>Limit</th><th>Days</th><th>Active</th><th></th></tr></thead>
+          <tbody>
+            {plans.map(p => (
+              <tr key={p.id}>
+                <td><strong>{p.name}</strong>{p.is_recommended && <span className="badge success" style={{ marginLeft: 8 }}>Rec</span>}</td>
+                <td>₹{p.price_inr}</td>
+                <td>{p.order_limit.toLocaleString()}</td>
+                <td>{p.validity_days}</td>
+                <td><span className={`badge ${p.is_active ? 'success' : 'failed'}`}>{p.is_active ? 'yes' : 'no'}</span></td>
+                <td><button className="btn secondary btn-sm" onClick={() => openEdit(p)}>Edit</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+function PagesManager() {
+  const [pages, setPages] = useState<CMSPage[]>([])
+  const [edit, setEdit] = useState<CMSPage | null>(null)
+  const [creating, setCreating] = useState(false)
+  const empty = { slug: '', title: '', meta_description: '', body_html: '<p>Content here</p>', status: 'draft', show_in_nav: false, nav_label: '', sort_order: 0 }
+  const [form, setForm] = useState(empty)
+
+  function reload() { api.cmsPages().then(r => setPages(r.pages)).catch(() => {}) }
+  useEffect(() => { reload() }, [])
+
+  function openEdit(p: CMSPage) { setEdit(p); setCreating(false); setForm({ ...p }) }
+  function openCreate() { setEdit(null); setCreating(true); setForm(empty) }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      if (creating) await api.createCMSPage(form)
+      else if (edit) await api.updateCMSPage(edit.id, form)
+      setEdit(null); setCreating(false); reload()
+    } catch (err) { alert(err instanceof Error ? err.message : 'Failed') }
+  }
+
+  async function remove(id: string) {
+    if (!confirm('Delete this page?')) return
+    await api.deleteCMSPage(id)
+    reload()
+  }
+
+  async function preview(id: string) {
+    await api.previewCMSPage(id)
+  }
+
+  if (edit || creating) {
+    return (
+      <form className="form form-wide" onSubmit={save}>
+        <h3>{creating ? 'New page' : 'Edit page'}</h3>
+        <label>Slug (URL: /slug)</label>
+        <input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="about" required />
+        <label>Title</label>
+        <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+        <label>Meta description</label>
+        <input value={form.meta_description} onChange={e => setForm({ ...form, meta_description: e.target.value })} />
+        <label>Body HTML</label>
+        <textarea rows={12} value={form.body_html} onChange={e => setForm({ ...form, body_html: e.target.value })} />
+        <label>Status</label>
+        <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+          <option value="draft">draft</option>
+          <option value="published">published</option>
+        </select>
+        <label className="radio-label"><input type="checkbox" checked={form.show_in_nav} onChange={e => setForm({ ...form, show_in_nav: e.target.checked })} /> Show in site nav</label>
+        <label>Nav label</label>
+        <input value={form.nav_label} onChange={e => setForm({ ...form, nav_label: e.target.value })} />
+        <label>Sort order</label>
+        <input type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: +e.target.value })} />
+        <div className="actions">
+          <button className="btn" type="submit">Save</button>
+          {!creating && edit && <button className="btn secondary" type="button" onClick={() => preview(edit.id)}>Preview</button>}
+          <button className="btn secondary" type="button" onClick={() => { setEdit(null); setCreating(false) }}>Cancel</button>
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <>
+      <div className="toolbar"><button className="btn" onClick={openCreate}><i className="fas fa-plus" /> New page</button></div>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Title</th><th>Slug</th><th>Status</th><th>Nav</th><th></th></tr></thead>
+          <tbody>
+            {pages.map(p => (
+              <tr key={p.id}>
+                <td><strong>{p.title}</strong></td>
+                <td>/{p.slug}</td>
+                <td><span className={`badge ${p.status === 'published' ? 'success' : 'pending'}`}>{p.status}</span></td>
+                <td>{p.show_in_nav ? 'yes' : '—'}</td>
+                <td>
+                  <button className="btn secondary btn-sm" onClick={() => openEdit(p)}>Edit</button>
+                  {' '}
+                  <button className="btn secondary btn-sm" onClick={() => preview(p.id)}>Preview</button>
+                  {' '}
+                  <button className="btn secondary btn-sm" onClick={() => remove(p.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+            {pages.length === 0 && <tr><td colSpan={5} className="muted">No pages yet</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
 export default function App() {
   return (
     <Routes>
@@ -665,6 +850,8 @@ export default function App() {
         <Route path="websites/add" element={<AddWebsite />} />
         <Route path="merchants" element={<Merchants />} />
         <Route path="profiles" element={<Profiles />} />
+        <Route path="plans" element={<PlansManager />} />
+        <Route path="pages" element={<PagesManager />} />
       </Route>
     </Routes>
   )

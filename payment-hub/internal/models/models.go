@@ -170,3 +170,22 @@ const (
 	SubStatusActive  = "active"
 	SubStatusExpired = "expired"
 )
+
+const (
+	CMSStatusDraft     = "draft"
+	CMSStatusPublished = "published"
+)
+
+type CMSPage struct {
+	ID              string
+	Slug            string
+	Title           string
+	MetaDescription string
+	BodyHTML        string
+	Status          string
+	ShowInNav       bool
+	NavLabel        string
+	SortOrder       int
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}

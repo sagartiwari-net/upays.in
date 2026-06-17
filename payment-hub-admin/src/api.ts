@@ -134,12 +134,28 @@ export const api = {
     request<{ unmatched: UnmatchedTxn[]; total: number }>('/unmatched?offset=' + offset),
   downloadPlugin: () => download('/downloads/amember-plugin', 'upipays-amember-plugin.zip'),
   subscriptionPlans: () => request<{ plans: SubscriptionPlan[] }>('/subscription-plans'),
+  createPlan: (body: object) => request<SubscriptionPlan>('/subscription-plans', { method: 'POST', body: JSON.stringify(body) }),
+  updatePlan: (id: string, body: object) => request<SubscriptionPlan>('/subscription-plans/' + id, { method: 'PUT', body: JSON.stringify(body) }),
   merchantSubscription: (id: string) => request<{ subscription: SubscriptionUsage | null }>('/merchants/' + id + '/subscription'),
   activateSubscription: (id: string, body: { plan_id: string; notes?: string }) =>
     request<{ ok: boolean; subscription: SubscriptionUsage }>('/merchants/' + id + '/subscription', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  cmsPages: () => request<{ pages: CMSPage[] }>('/cms-pages'),
+  createCMSPage: (body: object) => request<CMSPage>('/cms-pages', { method: 'POST', body: JSON.stringify(body) }),
+  updateCMSPage: (id: string, body: object) => request<CMSPage>('/cms-pages/' + id, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCMSPage: (id: string) => request<{ ok: boolean }>('/cms-pages/' + id, { method: 'DELETE' }),
+  previewCMSPage: async (id: string) => {
+    const token = getToken()
+    const res = await fetch(API + '/cms-pages/' + id + '/preview', {
+      headers: token ? { Authorization: 'Bearer ' + token } : {},
+    })
+    if (!res.ok) throw new Error('Preview failed')
+    const html = await res.text()
+    const w = window.open('', '_blank')
+    if (w) { w.document.write(html); w.document.close() }
+  },
 }
 
 export type DashboardStats = {
@@ -206,6 +222,9 @@ export type SubscriptionPlan = {
   validity_days: number
   order_limit: number
   is_recommended: boolean
+  sort_order?: number
+  is_active?: boolean
+  features_json?: string
 }
 
 export type SubscriptionUsage = {
@@ -216,6 +235,18 @@ export type SubscriptionUsage = {
   expires_at: string
   days_left: number
   is_trial: boolean
+}
+
+export type CMSPage = {
+  id: string
+  slug: string
+  title: string
+  meta_description: string
+  body_html: string
+  status: string
+  show_in_nav: boolean
+  nav_label: string
+  sort_order: number
 }
 
 export type ParserType = {

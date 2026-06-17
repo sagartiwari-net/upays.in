@@ -25,6 +25,7 @@ type AdminHandler struct {
 	notifier    *services.MerchantNotifier
 	emailWorker emailverify.ProfilePoller
 	subs        *services.SubscriptionService
+	cms         *repository.CMSPageRepository
 }
 
 func NewAdminHandler(
@@ -38,11 +39,12 @@ func NewAdminHandler(
 	notifier *services.MerchantNotifier,
 	emailWorker emailverify.ProfilePoller,
 	subs *services.SubscriptionService,
+	cms *repository.CMSPageRepository,
 ) *AdminHandler {
 	return &AdminHandler{
 		auth: auth, profiles: profiles, profileRepo: profileRepo, merchants: merchants,
 		orders: orders, bankTxns: bankTxns, webhooks: webhooks,
-		notifier: notifier, emailWorker: emailWorker, subs: subs,
+		notifier: notifier, emailWorker: emailWorker, subs: subs, cms: cms,
 	}
 }
 
@@ -464,19 +466,93 @@ func merchantResponse(m *models.Merchant, revealSecret bool) fiber.Map {
 }
 
 func (h *AdminHandler) ListSubscriptionPlans(c *fiber.Ctx) error {
-	plans, err := h.subs.ListPlans(c.Context())
+	plans, err := h.subs.ListAllPlans(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to list plans"})
 	}
 	out := make([]fiber.Map, 0, len(plans))
 	for _, p := range plans {
-		out = append(out, fiber.Map{
-			"id": p.ID, "slug": p.Slug, "name": p.Name, "price_inr": p.PriceINR,
-			"validity_days": p.ValidityDays, "order_limit": p.OrderLimit,
-			"is_recommended": p.IsRecommended, "features_json": p.FeaturesJSON,
-		})
+		out = append(out, planAdminJSON(p))
 	}
 	return c.JSON(fiber.Map{"plans": out})
+}
+
+func planAdminJSON(p models.SubscriptionPlan) fiber.Map {
+	return fiber.Map{
+		"id": p.ID, "slug": p.Slug, "name": p.Name, "price_inr": p.PriceINR,
+		"validity_days": p.ValidityDays, "order_limit": p.OrderLimit,
+		"is_recommended": p.IsRecommended, "sort_order": p.SortOrder,
+		"is_active": p.IsActive, "features_json": p.FeaturesJSON,
+	}
+}
+
+func (h *AdminHandler) CreateSubscriptionPlan(c *fiber.Ctx) error {
+	var body struct {
+		Slug           string  `json:"slug"`
+		Name           string  `json:"name"`
+		PriceINR       float64 `json:"price_inr"`
+		ValidityDays   int     `json:"validity_days"`
+		OrderLimit     int     `json:"order_limit"`
+		IsRecommended  bool    `json:"is_recommended"`
+		SortOrder      int     `json:"sort_order"`
+		IsActive       bool    `json:"is_active"`
+		FeaturesJSON   string  `json:"features_json"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Slug == "" || body.Name == "" || body.OrderLimit <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "slug, name, order_limit required"})
+	}
+	if body.ValidityDays <= 0 {
+		body.ValidityDays = 28
+	}
+	p, err := h.subs.CreatePlan(c.Context(), repository.PlanInput{
+		Slug: body.Slug, Name: body.Name, PriceINR: body.PriceINR,
+		ValidityDays: body.ValidityDays, OrderLimit: body.OrderLimit,
+		IsRecommended: body.IsRecommended, SortOrder: body.SortOrder,
+		IsActive: body.IsActive, FeaturesJSON: body.FeaturesJSON,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrDuplicateOrder) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "slug already exists"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(fiber.StatusCreated).JSON(planAdminJSON(*p))
+}
+
+func (h *AdminHandler) UpdateSubscriptionPlan(c *fiber.Ctx) error {
+	var body struct {
+		Slug           string  `json:"slug"`
+		Name           string  `json:"name"`
+		PriceINR       float64 `json:"price_inr"`
+		ValidityDays   int     `json:"validity_days"`
+		OrderLimit     int     `json:"order_limit"`
+		IsRecommended  bool    `json:"is_recommended"`
+		SortOrder      int     `json:"sort_order"`
+		IsActive       bool    `json:"is_active"`
+		FeaturesJSON   string  `json:"features_json"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	p, err := h.subs.UpdatePlan(c.Context(), c.Params("id"), repository.PlanInput{
+		Slug: body.Slug, Name: body.Name, PriceINR: body.PriceINR,
+		ValidityDays: body.ValidityDays, OrderLimit: body.OrderLimit,
+		IsRecommended: body.IsRecommended, SortOrder: body.SortOrder,
+		IsActive: body.IsActive, FeaturesJSON: body.FeaturesJSON,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+		}
+		if errors.Is(err, repository.ErrDuplicateOrder) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "slug already exists"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(planAdminJSON(*p))
 }
 
 func (h *AdminHandler) GetMerchantSubscription(c *fiber.Ctx) error {
@@ -510,4 +586,120 @@ func (h *AdminHandler) ActivateMerchantSubscription(c *fiber.Ctx) error {
 	}
 	usage, _ := h.subs.GetUsage(c.Context(), c.Params("id"))
 	return c.JSON(fiber.Map{"ok": true, "subscription": usage})
+}
+
+func cmsPageAdminJSON(p *models.CMSPage) fiber.Map {
+	return fiber.Map{
+		"id": p.ID, "slug": p.Slug, "title": p.Title, "meta_description": p.MetaDescription,
+		"body_html": p.BodyHTML, "status": p.Status, "show_in_nav": p.ShowInNav,
+		"nav_label": p.NavLabel, "sort_order": p.SortOrder,
+		"created_at": p.CreatedAt, "updated_at": p.UpdatedAt,
+	}
+}
+
+func (h *AdminHandler) ListCMSPages(c *fiber.Ctx) error {
+	pages, err := h.cms.List(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to list pages"})
+	}
+	out := make([]fiber.Map, 0, len(pages))
+	for i := range pages {
+		out = append(out, cmsPageAdminJSON(&pages[i]))
+	}
+	return c.JSON(fiber.Map{"pages": out})
+}
+
+func (h *AdminHandler) GetCMSPage(c *fiber.Ctx) error {
+	p, err := h.cms.GetByID(c.Context(), c.Params("id"))
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(cmsPageAdminJSON(p))
+}
+
+func (h *AdminHandler) CreateCMSPage(c *fiber.Ctx) error {
+	var body struct {
+		Slug            string `json:"slug"`
+		Title           string `json:"title"`
+		MetaDescription string `json:"meta_description"`
+		BodyHTML        string `json:"body_html"`
+		Status          string `json:"status"`
+		ShowInNav       bool   `json:"show_in_nav"`
+		NavLabel        string `json:"nav_label"`
+		SortOrder       int    `json:"sort_order"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Slug == "" || body.Title == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "slug and title required"})
+	}
+	p, err := h.cms.Create(c.Context(), repository.CMSPageInput{
+		Slug: body.Slug, Title: body.Title, MetaDescription: body.MetaDescription,
+		BodyHTML: body.BodyHTML, Status: body.Status, ShowInNav: body.ShowInNav,
+		NavLabel: body.NavLabel, SortOrder: body.SortOrder,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrDuplicateOrder) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "slug already exists"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(fiber.StatusCreated).JSON(cmsPageAdminJSON(p))
+}
+
+func (h *AdminHandler) UpdateCMSPage(c *fiber.Ctx) error {
+	var body struct {
+		Slug            string `json:"slug"`
+		Title           string `json:"title"`
+		MetaDescription string `json:"meta_description"`
+		BodyHTML        string `json:"body_html"`
+		Status          string `json:"status"`
+		ShowInNav       bool   `json:"show_in_nav"`
+		NavLabel        string `json:"nav_label"`
+		SortOrder       int    `json:"sort_order"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	p, err := h.cms.Update(c.Context(), c.Params("id"), repository.CMSPageInput{
+		Slug: body.Slug, Title: body.Title, MetaDescription: body.MetaDescription,
+		BodyHTML: body.BodyHTML, Status: body.Status, ShowInNav: body.ShowInNav,
+		NavLabel: body.NavLabel, SortOrder: body.SortOrder,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+		}
+		if errors.Is(err, repository.ErrDuplicateOrder) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "slug already exists"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(cmsPageAdminJSON(p))
+}
+
+func (h *AdminHandler) DeleteCMSPage(c *fiber.Ctx) error {
+	if err := h.cms.Delete(c.Context(), c.Params("id")); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"ok": true})
+}
+
+func (h *AdminHandler) PreviewCMSPage(c *fiber.Ctx) error {
+	p, err := h.cms.GetByID(c.Context(), c.Params("id"))
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
+	return c.SendString(RenderCMSPreview(p))
 }

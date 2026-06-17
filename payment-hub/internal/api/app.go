@@ -38,6 +38,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	profileRepo := repository.NewPaymentProfileRepository(db, cfg.EncryptSecret())
 	adminRepo := repository.NewAdminRepository(db)
 	subscriptionRepo := repository.NewSubscriptionRepository(db)
+	cmsRepo := repository.NewCMSPageRepository(db)
 	notifier := services.NewMerchantNotifier(merchantRepo, log)
 
 	profileService := services.NewProfileService(profileRepo, merchantRepo, cfg, log)
@@ -72,7 +73,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	webhookLogRepo := repository.NewWebhookLogRepository(db)
 	adminHandler := handlers.NewAdminHandler(
 		adminAuth, profileService, profileRepo, merchantRepo, orderRepo,
-		bankTxnRepo, webhookLogRepo, notifier, emailWorker, subscriptionService,
+		bankTxnRepo, webhookLogRepo, notifier, emailWorker, subscriptionService, cmsRepo,
 	)
 
 	app.Get("/health", healthHandler.Health)
@@ -121,7 +122,20 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 	adminProtected.Get("/merchants/:id/subscription", adminHandler.GetMerchantSubscription)
 	adminProtected.Post("/merchants/:id/subscription", adminHandler.ActivateMerchantSubscription)
 	adminProtected.Get("/subscription-plans", adminHandler.ListSubscriptionPlans)
+	adminProtected.Post("/subscription-plans", adminHandler.CreateSubscriptionPlan)
+	adminProtected.Put("/subscription-plans/:id", adminHandler.UpdateSubscriptionPlan)
+	adminProtected.Get("/cms-pages", adminHandler.ListCMSPages)
+	adminProtected.Post("/cms-pages", adminHandler.CreateCMSPage)
+	adminProtected.Get("/cms-pages/:id/preview", adminHandler.PreviewCMSPage)
+	adminProtected.Get("/cms-pages/:id", adminHandler.GetCMSPage)
+	adminProtected.Put("/cms-pages/:id", adminHandler.UpdateCMSPage)
+	adminProtected.Delete("/cms-pages/:id", adminHandler.DeleteCMSPage)
 	adminProtected.Post("/onboarding/website", adminHandler.OnboardWebsite)
+
+	publicHandler := handlers.NewPublicHandler(subscriptionRepo, cmsRepo)
+	app.Get("/public/plans", publicHandler.ListPlans)
+	app.Get("/public/pages", publicHandler.ListNavPages)
+	app.Get("/public/pages/:slug", publicHandler.GetPage)
 
 	merchantUserRepo := repository.NewMerchantUserRepository(db)
 	merchantAuthSvc := services.NewMerchantAuthService(db, merchantUserRepo, merchantRepo, subscriptionRepo, cfg.JWTSecret)
@@ -147,7 +161,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 
 	registerAdminUI(app)
 	registerMerchantUI(app)
-	registerPublicSite(app)
+	registerPublicSite(app, publicHandler)
 
 	maxSkew := time.Duration(cfg.SignatureMaxAgeMinutes) * time.Minute
 	rateLimiter := middleware.NewRateLimiter(100, 20, time.Minute)
