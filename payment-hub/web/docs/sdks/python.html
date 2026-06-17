@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python SDK — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>SDKs</h4>
+        <a href="/docs/sdks/php">PHP</a>
+        <a href="/docs/sdks/node">Node.js</a>
+        <a href="/docs/sdks/python" class="active">Python</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Python Example</h1>
+    <pre>import hmac, hashlib, json, time, requests
+
+def sign(secret: str, timestamp: str, method: str, path: str, body: str = "") -> str:
+    message = f"{timestamp}|{method}|{path}|{body}"
+    return hmac.new(secret.encode(), message.encode(), hashlib.sha256).hexdigest()
+
+def create_order(api_key: str, api_secret: str, payload: dict) -> dict:
+    path = "/api/v1/orders/create"
+    body = json.dumps(payload, separators=(",", ":"))
+    ts = str(int(time.time()))
+    sig = sign(api_secret, ts, "POST", path, body)
+    r = requests.post(
+        "https://upays.in" + path,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "X-Merchant-Key": api_key,
+            "X-Timestamp": ts,
+            "X-Signature": sig,
+        },
+        timeout=30,
+    )
+    r.raise_for_status()
+    return r.json()
+
+result = create_order("mk_xxx", "sk_xxx", {
+    "order_id": f"ORD-{int(time.time())}",
+    "amount": 1.0,
+    "currency": "INR",
+    "customer": {"email": "test@example.com", "name": "Test"},
+    "product": {"name": "Test"},
+    "return_url": "https://yoursite.com/return",
+    "webhook_url": "https://yoursite.com/webhook",
+})
+print(result["data"]["payment_url"])</pre>
+  </main>
+</div>
+</body>
+</html>

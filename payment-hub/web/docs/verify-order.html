@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Order — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>API Reference</h4>
+        <a href="/docs/create-order">Create Order</a>
+        <a href="/docs/verify-order" class="active">Verify Order</a>
+        <a href="/docs/webhooks">Webhooks</a>
+        <a href="/docs/errors">Error Codes</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Verify Order</h1>
+    <p class="docs-lead"><code>GET /api/v1/orders/{order_id}/verify</code></p>
+    <p>Poll payment status using your <code>order_id</code> (the ID you sent when creating the order). Use as backup if webhook delivery fails.</p>
+
+    <h2>Example</h2>
+    <pre>GET https://upays.in/api/v1/orders/INV-1001/verify
+X-Merchant-Key: mk_xxx
+X-Timestamp: 1717654321
+X-Signature: ... (sign with empty body)</pre>
+
+    <h2>Success response (200)</h2>
+    <pre>{
+  "success": true,
+  "data": {
+    "hub_order_id": "HUB-000042",
+    "order_id": "INV-1001",
+    "status": "success",
+    "amount": 499.00,
+    "currency": "INR",
+    "paid_at": "2026-06-06T12:15:00Z"
+  }
+}</pre>
+
+    <h2>Order statuses</h2>
+    <table>
+      <tr><th>Status</th><th>Meaning</th></tr>
+      <tr><td><code>pending</code></td><td>Awaiting payment</td></tr>
+      <tr><td><code>processing</code></td><td>Payment detected, verifying</td></tr>
+      <tr><td><code>success</code></td><td>Payment confirmed</td></tr>
+      <tr><td><code>failed</code></td><td>Payment failed</td></tr>
+      <tr><td><code>expired</code></td><td>Checkout session expired (~30 min)</td></tr>
+      <tr><td><code>refunded</code></td><td>Refunded</td></tr>
+    </table>
+  </main>
+</div>
+</body>
+</html>

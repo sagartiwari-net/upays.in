@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout Flow — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>Introduction</h4>
+        <a href="/docs">Getting Started</a>
+        <a href="/docs/auth">Authentication</a>
+        <a href="/docs/checkout" class="active">Checkout Flow</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Checkout Flow</h1>
+    <p class="docs-lead">End-to-end payment journey from order creation to fulfillment.</p>
+
+    <div class="flow-diagram">Your Server                    UPIPays Hub                 Customer
+     |                                |                          |
+     |-- POST /orders/create -------->|                          |
+     |&lt;- payment_url + token --------|                          |
+     |                                |                          |
+     |-- redirect to payment_url -----|------------------------->|
+     |                                |&lt;-- UPI QR scan & pay -----|
+     |                                |                          |
+     |                                |-- read bank email (IMAP)   |
+     |                                |-- match amount + UTR       |
+     |                                |                          |
+     |&lt;- POST webhook (success) -------|                          |
+     |                                |-- redirect return_url ---->|</div>
+
+    <h2>Step by step</h2>
+    <ol>
+      <li><strong>Create order</strong> — Your backend calls the API with amount and order_id</li>
+      <li><strong>Redirect customer</strong> — Send user to <code>payment_url</code> (<code>/pay/{token}</code>)</li>
+      <li><strong>Customer pays</strong> — Dynamic UPI QR shows unique amount (base + paise offset)</li>
+      <li><strong>Auto verification</strong> — Hub polls Gmail for bank credit alert matching amount</li>
+      <li><strong>Webhook</strong> — Hub POSTs <code>payment.success</code> to your webhook URL</li>
+      <li><strong>Return URL</strong> — Customer redirected to your <code>return_url</code></li>
+      <li><strong>Fulfill order</strong> — Your site marks order paid (prefer webhook over return URL alone)</li>
+    </ol>
+
+    <div class="callout">
+      Always fulfill orders on <strong>verified webhook</strong> or <strong>verify API</strong>, not on return URL alone — users can close the browser before redirect.
+    </div>
+
+    <h2>Checkout page endpoints</h2>
+    <table>
+      <tr><th>URL</th><th>Purpose</th></tr>
+      <tr><td><code>GET /pay/{token}</code></td><td>Checkout page with QR</td></tr>
+      <tr><td><code>GET /pay/{token}/qr</code></td><td>QR image</td></tr>
+      <tr><td><code>GET /pay/{token}/status</code></td><td>Poll status (JSON)</td></tr>
+      <tr><td><code>POST /pay/{token}/utr</code></td><td>Customer submits UTR manually (fallback)</td></tr>
+    </table>
+  </main>
+</div>
+</body>
+</html>

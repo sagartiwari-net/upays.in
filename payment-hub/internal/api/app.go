@@ -161,6 +161,7 @@ func NewApp(cfg *config.Config, log *zap.Logger, db *sql.DB) (*fiber.App, *AppSe
 
 	registerAdminUI(app)
 	registerMerchantUI(app)
+	registerDocsSite(app)
 	registerPublicSite(app, publicHandler)
 
 	maxSkew := time.Duration(cfg.SignatureMaxAgeMinutes) * time.Minute

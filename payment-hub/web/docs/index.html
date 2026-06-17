@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section>
+        <h4>Introduction</h4>
+        <a href="/docs" class="active">Getting Started</a>
+        <a href="/docs/auth">Authentication</a>
+        <a href="/docs/checkout">Checkout Flow</a>
+      </section>
+      <section>
+        <h4>API Reference</h4>
+        <a href="/docs/create-order">Create Order</a>
+        <a href="/docs/verify-order">Verify Order</a>
+        <a href="/docs/webhooks">Webhooks</a>
+        <a href="/docs/errors">Error Codes</a>
+      </section>
+      <section>
+        <h4>SDKs</h4>
+        <a href="/docs/sdks/php">PHP</a>
+        <a href="/docs/sdks/node">Node.js</a>
+        <a href="/docs/sdks/python">Python</a>
+      </section>
+      <section>
+        <h4>Plugins</h4>
+        <a href="/docs/plugins/amember">aMember Pro</a>
+      </section>
+      <section>
+        <h4>Tools</h4>
+        <a href="/docs/upipays.postman_collection.json" download>Postman Collection</a>
+        <a href="https://upays.in/dashboard/register">Get API Keys</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Getting Started</h1>
+    <p class="docs-lead">Accept UPI payments on your website in under 30 minutes with UPIPays dynamic QR + email verification.</p>
+
+    <h2>Overview</h2>
+    <p>UPIPays is a payment hub. Your server creates an order via REST API, customer pays via UPI QR on our hosted checkout page, we verify payment via bank email (IMAP), then notify your site via webhook.</p>
+    <ul>
+      <li><strong>0% transaction fee</strong> — money goes directly to your bank</li>
+      <li><strong>HMAC-signed API</strong> — secure server-to-server calls</li>
+      <li><strong>Hosted checkout</strong> — <code>https://upays.in/pay/{token}</code></li>
+    </ul>
+
+    <h2>Quick start</h2>
+    <ol>
+      <li><a href="https://upays.in/dashboard/register">Register</a> as a merchant</li>
+      <li>Complete UPI onboarding (UPI ID + Gmail IMAP app password)</li>
+      <li>Copy <strong>API Key</strong> and <strong>API Secret</strong> from Settings</li>
+      <li>Set your default <strong>Webhook URL</strong> in dashboard or per-order</li>
+      <li>Call <code>POST /api/v1/orders/create</code> — redirect customer to <code>payment_url</code></li>
+      <li>Listen for <code>payment.success</code> webhook or poll <code>GET /api/v1/orders/:id/verify</code></li>
+    </ol>
+
+    <div class="callout">
+      <strong>Base URL:</strong> <code>https://upays.in</code><br>
+      All API paths are prefixed with <code>/api/v1</code>.
+    </div>
+
+    <h2>Test payment</h2>
+    <p>Use amount <code>₹1</code> for testing. Each order gets a unique pay amount (e.g. ₹1.03) so bank emails can be matched automatically.</p>
+    <p>CLI test client in the repo:</p>
+    <pre>cd payment-hub
+API_KEY=mk_xxx API_SECRET=sk_xxx BASE_URL=https://upays.in go run ./cmd/testclient</pre>
+
+    <h2>Free trial</h2>
+    <p>New accounts get a <strong>100 order / 14 day</strong> free trial. Upgrade plans from the merchant dashboard when you need more capacity.</p>
+
+    <h2>Next steps</h2>
+    <ul>
+      <li><a href="/docs/auth">Authentication &amp; HMAC signing</a></li>
+      <li><a href="/docs/create-order">Create Order API</a></li>
+      <li><a href="/docs/webhooks">Webhook integration</a></li>
+      <li><a href="/docs/upipays.postman_collection.json" download>Download Postman collection</a></li>
+    </ul>
+  </main>
+</div>
+</body>
+</html>

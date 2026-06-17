@@ -1,0 +1,67 @@
+{
+  "info": {
+    "name": "UPIPays API",
+    "description": "UPIPays payment hub API.\n\nSet collection variables:\n- base_url: https://upays.in\n- api_key: your mk_ key\n- api_secret: your sk_ secret\n- order_id: test order id",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://upays.in" },
+    { "key": "api_key", "value": "mk_your_key" },
+    { "key": "api_secret", "value": "sk_your_secret" },
+    { "key": "order_id", "value": "TEST-001" }
+  ],
+  "item": [
+    {
+      "name": "Create Order",
+      "event": [{
+        "listen": "prerequest",
+        "script": {
+          "exec": [
+            "const ts = Math.floor(Date.now()/1000).toString();",
+            "const method = 'POST';",
+            "const path = '/api/v1/orders/create';",
+            "const body = pm.request.body.raw || '{}';",
+            "const message = ts + '|' + method + '|' + path + '|' + body;",
+            "const sig = CryptoJS.HmacSHA256(message, pm.collectionVariables.get('api_secret')).toString();",
+            "pm.request.headers.upsert({key:'X-Merchant-Key', value: pm.collectionVariables.get('api_key')});",
+            "pm.request.headers.upsert({key:'X-Timestamp', value: ts});",
+            "pm.request.headers.upsert({key:'X-Signature', value: sig});"
+          ],
+          "type": "text/javascript"
+        }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"{{order_id}}\",\n  \"amount\": 1.00,\n  \"currency\": \"INR\",\n  \"customer\": { \"email\": \"test@example.com\", \"name\": \"Test User\" },\n  \"product\": { \"name\": \"Test Product\" },\n  \"return_url\": \"https://yoursite.com/payment/return\",\n  \"webhook_url\": \"https://yoursite.com/payment/webhook\"\n}"
+        },
+        "url": "{{base_url}}/api/v1/orders/create"
+      }
+    },
+    {
+      "name": "Verify Order",
+      "event": [{
+        "listen": "prerequest",
+        "script": {
+          "exec": [
+            "const ts = Math.floor(Date.now()/1000).toString();",
+            "const method = 'GET';",
+            "const path = '/api/v1/orders/' + pm.collectionVariables.get('order_id') + '/verify';",
+            "const message = ts + '|' + method + '|' + path + '|';",
+            "const sig = CryptoJS.HmacSHA256(message, pm.collectionVariables.get('api_secret')).toString();",
+            "pm.request.headers.upsert({key:'X-Merchant-Key', value: pm.collectionVariables.get('api_key')});",
+            "pm.request.headers.upsert({key:'X-Timestamp', value: ts});",
+            "pm.request.headers.upsert({key:'X-Signature', value: sig});"
+          ],
+          "type": "text/javascript"
+        }
+      }],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/orders/{{order_id}}/verify"
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>aMember Pro Plugin — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>Plugins</h4>
+        <a href="/docs/plugins/amember" class="active">aMember Pro</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>aMember Pro Plugin</h1>
+    <p class="docs-lead">Official UPIPays payment plugin for aMember Pro membership sites.</p>
+
+    <h2>Download</h2>
+    <p>Download from super admin: <strong>Admin → Downloads → aMember plugin</strong>, or API:</p>
+    <pre>GET https://upays.in/admin/api/downloads/amember-plugin
+Authorization: Bearer {admin_jwt}</pre>
+    <p>File: <code>upipays.php</code> — place in your aMember <code>application/default/plugins/payment/</code> folder.</p>
+
+    <h2>Configuration</h2>
+    <ol>
+      <li>aMember Admin → Setup → Plugins → enable <strong>upipays</strong></li>
+      <li>Add payment system → UPIPays</li>
+      <li>Set <strong>Hub URL</strong>: <code>https://upays.in</code></li>
+      <li>Paste <strong>API Key</strong> and <strong>API Secret</strong> from UPIPays merchant dashboard</li>
+      <li>Save — webhook URL is auto-configured to your aMember IPN endpoint</li>
+    </ol>
+
+    <h2>Test</h2>
+    <ol>
+      <li>Create a ₹1 test product in aMember</li>
+      <li>Complete checkout — you'll be redirected to UPIPays QR page</li>
+      <li>Pay via UPI — membership activates on webhook</li>
+    </ol>
+
+    <div class="callout">
+      Regenerating API secret in UPIPays dashboard requires updating aMember plugin settings too.
+    </div>
+  </main>
+</div>
+</body>
+</html>

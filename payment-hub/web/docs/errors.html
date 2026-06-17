@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Codes — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>API Reference</h4>
+        <a href="/docs/errors" class="active">Error Codes</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Error Codes</h1>
+    <p class="docs-lead">All API errors return JSON: <code>{"success": false, "error": "message"}</code></p>
+
+    <h2>HTTP status codes</h2>
+    <table>
+      <tr><th>Code</th><th>Meaning</th><th>Example error</th></tr>
+      <tr><td>400</td><td>Invalid request</td><td><code>order_id is required</code>, invalid return_url</td></tr>
+      <tr><td>401</td><td>Auth failed</td><td><code>missing authentication headers</code>, <code>invalid signature</code></td></tr>
+      <tr><td>402</td><td>Subscription limit</td><td><code>plan_limit_exceeded</code>, <code>plan_expired</code></td></tr>
+      <tr><td>403</td><td>Forbidden</td><td><code>merchant suspended</code></td></tr>
+      <tr><td>409</td><td>Conflict</td><td><code>duplicate order_id</code></td></tr>
+      <tr><td>404</td><td>Not found</td><td><code>order not found</code> (verify)</td></tr>
+      <tr><td>429</td><td>Rate limit</td><td>Too many requests (100/min per IP)</td></tr>
+      <tr><td>500</td><td>Server error</td><td><code>failed to create order</code></td></tr>
+    </table>
+
+    <h2>Subscription error codes (402)</h2>
+    <table>
+      <tr><th>code field</th><th>Action</th></tr>
+      <tr><td><code>plan_limit_exceeded</code></td><td>Upgrade plan at <a href="https://upays.in/dashboard/billing">/dashboard/billing</a></td></tr>
+      <tr><td><code>plan_expired</code></td><td>Renew subscription</td></tr>
+      <tr><td><code>no_subscription</code></td><td>Contact support — account needs active plan</td></tr>
+    </table>
+  </main>
+</div>
+</body>
+</html>

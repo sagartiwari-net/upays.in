@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webhooks — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>API Reference</h4>
+        <a href="/docs/create-order">Create Order</a>
+        <a href="/docs/verify-order">Verify Order</a>
+        <a href="/docs/webhooks" class="active">Webhooks</a>
+        <a href="/docs/errors">Error Codes</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Webhooks</h1>
+    <p class="docs-lead">UPIPays sends a POST request to your webhook URL when payment status changes.</p>
+
+    <h2>Events</h2>
+    <table>
+      <tr><th>Event</th><th>When</th></tr>
+      <tr><td><code>payment.success</code></td><td>Payment verified successfully</td></tr>
+      <tr><td><code>payment.failed</code></td><td>Payment failed</td></tr>
+    </table>
+
+    <h2>Payload</h2>
+    <pre>{
+  "event": "payment.success",
+  "hub_order_id": "HUB-000042",
+  "order_id": "INV-1001",
+  "amount": 499.00,
+  "currency": "INR",
+  "status": "success",
+  "paid_at": "2026-06-06T12:15:00Z"
+}</pre>
+
+    <h2>Webhook headers</h2>
+    <table>
+      <tr><th>Header</th><th>Description</th></tr>
+      <tr><td><code>X-Hub-Event</code></td><td>Event name (e.g. <code>payment.success</code>)</td></tr>
+      <tr><td><code>X-Hub-Timestamp</code></td><td>Unix timestamp when webhook was sent</td></tr>
+      <tr><td><code>X-Hub-Signature</code></td><td>HMAC-SHA256 hex signature</td></tr>
+    </table>
+
+    <h2>Verify webhook signature</h2>
+    <p>Same algorithm as API auth, but path is the <strong>URL path of your webhook endpoint</strong>:</p>
+    <pre>message = timestamp + "|POST|" + webhook_path + "|" + raw_body
+expected = HMAC_SHA256(api_secret, message)</pre>
+    <p>Example: if webhook URL is <code>https://yoursite.com/payment/webhook</code>, path is <code>/payment/webhook</code>.</p>
+
+    <h2>Handler checklist</h2>
+    <ol>
+      <li>Read raw request body before parsing JSON</li>
+      <li>Verify <code>X-Hub-Signature</code> using your API secret</li>
+      <li>Check <code>order_id</code> matches an order you created</li>
+      <li>Verify <code>amount</code> matches expected value</li>
+      <li>Return HTTP 200 quickly — do heavy work async</li>
+      <li>Make handler idempotent (webhooks may retry)</li>
+    </ol>
+  </main>
+</div>
+</body>
+</html>

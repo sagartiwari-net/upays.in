@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHP SDK — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>SDKs</h4>
+        <a href="/docs/sdks/php" class="active">PHP</a>
+        <a href="/docs/sdks/node">Node.js</a>
+        <a href="/docs/sdks/python">Python</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>PHP Example</h1>
+    <p class="docs-lead">Signed API request in plain PHP (PHP 7.4+).</p>
+    <pre>&lt;?php
+function upipays_sign(string $secret, string $ts, string $method, string $path, string $body): string {
+    $message = $ts . '|' . $method . '|' . $path . '|' . $body;
+    return hash_hmac('sha256', $message, $secret);
+}
+
+function upipays_create_order(string $apiKey, string $apiSecret, array $payload): array {
+    $path = '/api/v1/orders/create';
+    $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+    $ts   = (string) time();
+    $sig  = upipays_sign($apiSecret, $ts, 'POST', $path, $body);
+
+    $ch = curl_init('https://upays.in' . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $body,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'X-Merchant-Key: ' . $apiKey,
+            'X-Timestamp: ' . $ts,
+            'X-Signature: ' . $sig,
+        ],
+    ]);
+    $resp = curl_exec($ch);
+    curl_close($ch);
+    return json_decode($resp, true);
+}
+
+// Usage
+$result = upipays_create_order('mk_xxx', 'sk_xxx', [
+    'order_id'   => 'INV-' . time(),
+    'amount'     => 1.00,
+    'currency'   => 'INR',
+    'customer'   => ['email' => 'test@example.com', 'name' => 'Test'],
+    'product'    => ['name' => 'Test'],
+    'return_url' => 'https://yoursite.com/return',
+    'webhook_url'=> 'https://yoursite.com/webhook',
+]);
+header('Location: ' . $result['data']['payment_url']);</pre>
+
+    <h2>Verify webhook</h2>
+    <pre>$raw  = file_get_contents('php://input');
+$ts   = $_SERVER['HTTP_X_HUB_TIMESTAMP'] ?? '';
+$sig  = $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
+$path = parse_url('https://yoursite.com/payment/webhook', PHP_URL_PATH);
+$expected = upipays_sign($apiSecret, $ts, 'POST', $path, $raw);
+if (!hash_equals($expected, $sig)) { http_response_code(401); exit; }</pre>
+  </main>
+</div>
+</body>
+</html>

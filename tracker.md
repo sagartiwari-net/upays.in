@@ -3,7 +3,7 @@
 > Update this file after every completed task. Recalculate phase % and overall % at the bottom.
 
 **Last updated:** 2026-06-06  
-**Overall project progress:** `65%`
+**Overall project progress:** `75%`
 
 ---
 
@@ -130,19 +130,19 @@
 
 ## Phase 5 — Developer Documentation
 
-**Status:** `Not Started`  
-**Phase progress:** `0%` (0 / 8)
+**Status:** `Done`  
+**Phase progress:** `100%` (8 / 8)
 
 | # | Task | Done |
 |---|------|------|
-| 5.1 | Docusaurus / docs site scaffold | ☐ |
-| 5.2 | Getting started guide | ☐ |
-| 5.3 | HMAC auth documentation | ☐ |
-| 5.4 | API reference (create + verify) | ☐ |
-| 5.5 | Webhooks guide + signature verify | ☐ |
-| 5.6 | Code samples (PHP, Node, Python) | ☐ |
-| 5.7 | Postman collection | ☐ |
-| 5.8 | Deploy at upays.in/docs | ☐ |
+| 5.1 | Docs site at `/docs` | ☑ |
+| 5.2 | Getting started guide | ☑ |
+| 5.3 | HMAC auth documentation | ☑ |
+| 5.4 | API reference (create + verify) | ☑ |
+| 5.5 | Webhooks guide + signature verify | ☑ |
+| 5.6 | Code samples (PHP, Node, Python) | ☑ |
+| 5.7 | Postman collection | ☑ |
+| 5.8 | Deploy at upays.in/docs | ☑ |
 
 ---
 
@@ -189,16 +189,16 @@
 | 2 | Merchant Auth | In Progress | 90% |
 | 3 | Subscriptions | Done | 100% |
 | 4 | Admin CMS | Done | 100% |
-| 5 | Developer Docs | Not Started | 0% |
+| 5 | Developer Docs | Done | 100% |
 | 6 | Plugins & SDKs | In Progress | 17% |
 | 7 | Production Hardening | Not Started | 0% |
 
-**Weighted overall progress:** `65%`
+**Weighted overall progress:** `75%`
 
 ```
-= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 0×10 + 17×12 + 0×8) / 100
-= (800 + 1200 + 1800 + 1500 + 1000 + 0 + 204 + 0) / 100
-= 6504 / 100 ≈ 65%
+= (80×10 + 80×15 + 90×20 + 100×15 + 100×10 + 100×10 + 17×12 + 0×8) / 100
+= (800 + 1200 + 1800 + 1500 + 1000 + 1000 + 204 + 0) / 100
+= 7504 / 100 ≈ 75%
 ```
 
 ---
@@ -217,6 +217,7 @@
 | 2026-06-06 | 2 | Merchant portal: register, login, onboarding, dashboard at /dashboard |
 | 2026-06-06 | 3 | Subscriptions: plans DB, order limits, trial on signup, billing UI, admin activate |
 | 2026-06-06 | 4 | Admin CMS: plans/pages manager, public API, dynamic pricing page |
+| 2026-06-06 | 5 | Developer docs at /docs: API, webhooks, SDKs, Postman collection |
 
 ---
 

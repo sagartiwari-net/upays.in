@@ -54,5 +54,6 @@ nohup ./bin/upipays > logs/app.log 2>&1 &
 sleep 1
 curl -sf "http://127.0.0.1:${PORT}/health" && echo " Health OK" || echo " WARN: health check failed — check logs/app.log"
 curl -sf "http://127.0.0.1:${PORT}/public/plans" >/dev/null && echo " Public plans API OK" || echo " WARN: /public/plans failed — old binary still running?"
+curl -sf "http://127.0.0.1:${PORT}/docs" >/dev/null && echo " Docs OK" || echo " WARN: /docs failed"
 
 echo "==> Done. Site: https://upays.in"

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication — UPIPays Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/docs/assets/css/docs.css">
+</head>
+<body>
+<div class="docs-layout">
+  <aside class="docs-sidebar">
+    <a href="/docs" class="docs-brand"><i class="fas fa-bolt"></i> UPIPays Docs</a>
+    <nav class="docs-nav">
+      <section><h4>Introduction</h4>
+        <a href="/docs">Getting Started</a>
+        <a href="/docs/auth" class="active">Authentication</a>
+        <a href="/docs/checkout">Checkout Flow</a>
+      </section>
+      <section><h4>API Reference</h4>
+        <a href="/docs/create-order">Create Order</a>
+        <a href="/docs/verify-order">Verify Order</a>
+        <a href="/docs/webhooks">Webhooks</a>
+        <a href="/docs/errors">Error Codes</a>
+      </section>
+      <section><h4>SDKs</h4>
+        <a href="/docs/sdks/php">PHP</a>
+        <a href="/docs/sdks/node">Node.js</a>
+        <a href="/docs/sdks/python">Python</a>
+      </section>
+      <section><h4>Plugins</h4>
+        <a href="/docs/plugins/amember">aMember Pro</a>
+      </section>
+    </nav>
+  </aside>
+  <main class="docs-main">
+    <h1>Authentication</h1>
+    <p class="docs-lead">All API requests use HMAC-SHA256 request signing with your merchant API key and secret.</p>
+
+    <h2>Required headers</h2>
+    <table>
+      <tr><th>Header</th><th>Description</th></tr>
+      <tr><td><code>X-Merchant-Key</code></td><td>Your API key (starts with <code>mk_</code>)</td></tr>
+      <tr><td><code>X-Timestamp</code></td><td>Unix timestamp in seconds (UTC). Must be within ±15 minutes of server time.</td></tr>
+      <tr><td><code>X-Signature</code></td><td>Hex-encoded HMAC-SHA256 signature</td></tr>
+      <tr><td><code>Content-Type</code></td><td><code>application/json</code> for POST requests</td></tr>
+    </table>
+
+    <h2>Signature algorithm</h2>
+    <p>Build the message string:</p>
+    <pre>message = timestamp + "|" + method + "|" + path + "|" + body</pre>
+    <ul>
+      <li><code>timestamp</code> — same value as <code>X-Timestamp</code> header</li>
+      <li><code>method</code> — uppercase HTTP method (<code>GET</code>, <code>POST</code>)</li>
+      <li><code>path</code> — request path only, e.g. <code>/api/v1/orders/create</code> (no domain, no query string)</li>
+      <li><code>body</code> — raw JSON body string, or empty string for GET</li>
+    </ul>
+    <pre>signature = HMAC_SHA256(api_secret, message) → hex encode</pre>
+
+    <h2>Example (create order)</h2>
+    <pre>timestamp = "1717654321"
+method    = "POST"
+path      = "/api/v1/orders/create"
+body      = '{"order_id":"ORD-1","amount":100,...}'
+
+message   = "1717654321|POST|/api/v1/orders/create|{...}"
+signature = hmac_sha256(api_secret, message)</pre>
+
+    <div class="callout warn">
+      <strong>Important:</strong> Sign the exact raw body bytes you send. Whitespace and field order matter.
+    </div>
+
+    <h2>Go reference</h2>
+    <pre>import "github.com/sagartiwari-net/upays.in/payment-hub/internal/security"
+
+ts  := strconv.FormatInt(time.Now().Unix(), 10)
+sig := security.Sign(apiSecret, ts, "POST", "/api/v1/orders/create", bodyString)</pre>
+  </main>
+</div>
+</body>
+</html>
