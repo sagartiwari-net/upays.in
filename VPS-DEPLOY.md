@@ -2,6 +2,18 @@
 
 Path: `/www/wwwroot/upays.in`
 
+## Git pull error: "dubious ownership"
+
+aaPanel folder alag user se bana ho to root se pull fail hota hai. **Pehle ye ek baar chalao:**
+
+```bash
+git config --global --add safe.directory /www/wwwroot/upays.in
+cd /www/wwwroot/upays.in
+git pull origin main
+```
+
+---
+
 ## Aapne ab tak kiya
 
 ```bash
